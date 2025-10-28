@@ -10,11 +10,13 @@ echo "====================================="
 
 # Detect current user and home directory
 CURRENT_USER=$(whoami)
+CURRENT_GROUP=$(id -gn)
 USER_HOME=$HOME
 APP_DIR="$USER_HOME/chemopad"
 VENV_DIR="$APP_DIR/venv"
 
 echo "Detected user: $CURRENT_USER"
+echo "Detected group: $CURRENT_GROUP"
 echo "Home directory: $USER_HOME"
 echo "App directory: $APP_DIR"
 echo ""
@@ -24,8 +26,8 @@ echo "1. Creating directories..."
 sudo mkdir -p /var/log/gunicorn
 sudo mkdir -p /var/log/supervisor
 sudo mkdir -p /var/run/gunicorn
-sudo chown $CURRENT_USER:$CURRENT_USER /var/log/gunicorn
-sudo chown $CURRENT_USER:$CURRENT_USER /var/run/gunicorn
+sudo chown $CURRENT_USER:$CURRENT_GROUP /var/log/gunicorn
+sudo chown $CURRENT_USER:$CURRENT_GROUP /var/run/gunicorn
 
 # Setup Python virtual environment
 echo "2. Setting up Python virtual environment..."

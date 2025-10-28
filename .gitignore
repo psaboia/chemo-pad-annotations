@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Data files (sensitive/large)
+data/*.csv
+!data/README.md
+
+# Flask
+instance/
+.webassets-cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+matches.json
+*.log
+
+# uv
+uv.lock
+.python-version

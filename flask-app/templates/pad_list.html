@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<header>
+    <button class="back-btn" onclick="window.location.href='/'">← Back</button>
+    <h2>{{ api_name }} - {{ api_progress.completed }}/{{ api_progress.total }} PAD#s complete</h2>
+</header>
+
+<div class="pad-list-container">
+    <div class="filters">
+        <input type="text" id="search" placeholder="Search PAD# or Sample..." onkeyup="filterTable()">
+        <select id="status-filter" onchange="filterTable()">
+            <option value="all">All Status</option>
+            <option value="complete">Complete ✅</option>
+            <option value="partial">Partial ⚠️</option>
+            <option value="not_started">Not Started ❌</option>
+        </select>
+    </div>
+
+    <table class="pad-table">
+        <thead>
+            <tr>
+                <th>PAD#</th>
+                <th>Sample</th>
+                <th>Rows</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pad in pads %}
+            <tr data-status="{{ pad.status }}">
+                <td>{{ pad.pad_num }}</td>
+                <td>{{ pad.sample }}</td>
+                <td>{{ pad.matched_rows }}/{{ pad.total_rows }}</td>
+                <td>
+                    {% if pad.status == 'complete' %}
+                        <span class="status-complete">✅ Complete</span>
+                    {% elif pad.status == 'partial' %}
+                        <span class="status-partial">⚠️ {{ pad.matched_rows }}/{{ pad.total_rows }}</span>
+                    {% else %}
+                        <span class="status-notstarted">❌ Not Started</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="action-btn" onclick="window.location.href='/match/{{ api_name|urlencode }}/{{ pad.pad_num }}'">
+                        {% if pad.status == 'complete' %}View{% elif pad.status == 'partial' %}Continue{% else %}Start{% endif %}
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function filterTable() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const status = document.getElementById('status-filter').value;
+    const rows = document.querySelectorAll('.pad-table tbody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowStatus = row.dataset.status;
+
+        const matchesSearch = text.includes(search);
+        const matchesStatus = status === 'all' || rowStatus === status;
+
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

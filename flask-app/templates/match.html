@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block content %}
+<header>
+    <button class="back-btn" onclick="window.location.href='/api/{{ api_name|urlencode }}'">← Back</button>
+    <h2>PAD# {{ pad_num }} - {{ api_name }} - {{ matched_count }}/{{ total_rows }} matched</h2>
+</header>
+
+<div class="match-container">
+    {% for annotation in annotations %}
+    <div class="annotation-row" data-row-id="{{ annotation.row_id }}">
+        <div class="row-header">
+            <span class="row-number">Row {{ loop.index }}/{{ total_rows }}</span>
+            {% if annotation.matched_id %}
+            <span class="status-icon">✅</span>
+            {% else %}
+            <span class="status-icon">⚠️</span>
+            {% endif %}
+        </div>
+
+        <div class="row-content">
+            <div class="annotation-info">
+                <h3>Annotation</h3>
+                <div class="field-group">
+                    <div class="field">
+                        <label>Camera:</label>
+                        <span>{{ annotation.Camera or 'N/A' }}</span>
+                    </div>
+                    <div class="field">
+                        <label>Lighting:</label>
+                        <span>{{ annotation['Lighting (lightbox, benchtop, benchtop dark)'] or 'N/A' }}</span>
+                    </div>
+                    <div class="field">
+                        <label>Background:</label>
+                        <span>{{ annotation['black/white background'] or 'N/A' }}</span>
+                    </div>
+                    <div class="field">
+                        <label>mg concentration:</label>
+                        <span>{{ annotation['mg concentration (w/w mg/mg or w/v mg/mL)'] or 'N/A' }}</span>
+                    </div>
+                    <div class="field">
+                        <label>% Conc:</label>
+                        <span>{{ annotation['% Conc'] or 'N/A' }}</span>
+                    </div>
+                </div>
+                <button class="edit-btn" onclick="editAnnotation({{ annotation.row_id }})">Edit Fields</button>
+            </div>
+
+            <div class="candidates-container">
+                <h3>Candidates ({{ candidates|selectattr('is_used', 'equalto', false)|list|length }} available)</h3>
+                <div class="candidates-scroll">
+                    {% for candidate in candidates %}
+                    <div class="candidate-card {% if candidate.is_used %}used{% endif %} {% if annotation.matched_id == candidate.id %}selected{% endif %}"
+                         data-candidate-id="{{ candidate.id }}">
+                        <div class="candidate-header">
+                            <strong>ID: {{ candidate.id }}</strong>
+                            {% if candidate.is_used and annotation.matched_id != candidate.id %}
+                            <span class="used-badge">Used</span>
+                            {% elif annotation.matched_id == candidate.id %}
+                            <span class="selected-badge">✅ SELECTED</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="candidate-image">
+                            {% if candidate.processed_file_location %}
+                            <img src="https://pad.crc.nd.edu{{ candidate.processed_file_location }}"
+                                 alt="PAD Image {{ candidate.id }}"
+                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjEwMCIgeT0iMTAwIiBmaWxsPSIjOTk5Ij5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
+                            {% else %}
+                            <div class="no-image">No Image</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="candidate-info">
+                            <div class="info-row">
+                                <label>Camera:</label>
+                                <span>{{ candidate.camera_type_1 or 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Sample:</label>
+                                <span>{{ candidate.sample_name or 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Quantity:</label>
+                                <span>{{ candidate.quantity or 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>Date:</label>
+                                <span>{{ candidate.date_of_creation[:10] if candidate.date_of_creation else 'N/A' }}</span>
+                            </div>
+                            {% if candidate.deleted %}
+                            <div class="info-row deleted">
+                                <label>Status:</label>
+                                <span>Deleted</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if not candidate.is_used or annotation.matched_id == candidate.id %}
+                        <button class="select-btn"
+                                onclick="selectCandidate({{ annotation.row_id }}, {{ candidate.id }})"
+                                {% if annotation.matched_id == candidate.id %}
+                                data-selected="true"
+                                {% endif %}>
+                            {{ 'Unselect' if annotation.matched_id == candidate.id else 'Select' }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="page-actions">
+    <button class="save-btn" onclick="saveProgress()">Save Progress</button>
+    <button class="export-btn" onclick="exportPad()">Export This PAD#</button>
+    <button class="skip-btn" onclick="skipToNext()">Skip to Next PAD# →</button>
+</div>
+
+<script>
+function selectCandidate(rowId, candidateId) {
+    const btn = event.target;
+    const isSelected = btn.dataset.selected === 'true';
+
+    if (isSelected) {
+        // Unselect
+        candidateId = null;
+    }
+
+    fetch('/api/save_match', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            row_id: rowId,
+            card_id: candidateId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function editAnnotation(rowId) {
+    // TODO: Implement edit modal
+    alert('Edit functionality coming soon!');
+}
+
+function saveProgress() {
+    alert('Progress is automatically saved!');
+}
+
+function exportPad() {
+    window.location.href = '/api/export';
+}
+
+function skipToNext() {
+    // Navigate to next PAD# in the list
+    window.location.href = '/api/{{ api_name|urlencode }}';
+}
+</script>
+{% endblock %}

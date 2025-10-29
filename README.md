@@ -188,10 +188,24 @@ The exported CSV includes:
 
 ## Documentation
 
-For detailed user instructions, see: **[USER_GUIDE.md](docs/USER_GUIDE.md)**
+### For VM Users
+Access the app at: **http://pad-annotation.crc.nd.edu:8080/**
+
+Quick start guide with visual references: **[quick-start.md](docs/quick-start.md)**
+
+This guide covers:
+- Step-by-step interface walkthrough
+- How to access the app
+- Login and authentication
+- Quick matching workflow
+- Exporting results
+
+### For Development / Local Setup
+Detailed user guide: **[user-guide.md](docs/user-guide.md)**
 
 This guide covers:
 - How to navigate the interface
 - Step-by-step matching process
 - Tips for better accuracy
 - Common workflows
+- Troubleshooting

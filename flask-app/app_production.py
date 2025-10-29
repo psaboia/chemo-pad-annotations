@@ -359,6 +359,16 @@ def export_data():
             if row_id in notes:
                 export_df.at[orig_idx, 'notes'] = notes[row_id]
 
+    # Add notes for rows that have notes but aren't in matches
+    # This handles annotations with notes that haven't been matched or marked as no_match yet
+    for row_id, note_text in notes.items():
+        if row_id not in matches:
+            # Find the original index for this row_id
+            matching_rows = matchable_df[matchable_df['row_id'] == row_id]
+            if len(matching_rows) > 0:
+                orig_idx = matching_rows.index[0]
+                export_df.at[orig_idx, 'notes'] = note_text
+
     # Remove processed_file_location (we have URL instead) but keep missing_card column
     export_df = export_df.drop(columns=['matched_processed_file_location'], errors='ignore')
 

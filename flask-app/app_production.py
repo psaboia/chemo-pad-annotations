@@ -243,7 +243,13 @@ def get_stats():
         'pad_progress': (completed_pads / total_pads * 100) if total_pads > 0 else 0
     })
 
-if __name__ == '__main__':
+# Load data when module is imported (for gunicorn)
+try:
     load_data()
-    # Production server should use gunicorn, not Flask dev server
+    logger.info("Data loaded successfully on module import")
+except Exception as e:
+    logger.error(f"Failed to load data on module import: {e}")
+
+if __name__ == '__main__':
+    # For development only
     app.run(host='0.0.0.0', port=5000, debug=False)

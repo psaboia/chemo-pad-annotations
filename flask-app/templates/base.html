@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <nav class="navigation-bar">
+        <div class="nav-container">
+            <h2 class="nav-title">ChemoPAD Annotation Matcher</h2>
+            <div class="nav-links">
+                {% if request.endpoint == 'match_page' %}
+                <a href="/api/{{ api_name|urlencode }}" class="nav-link">← Back to {{ api_name }}</a>
+                <span class="nav-separator">|</span>
+                {% endif %}
+                {% if request.endpoint != 'dashboard' %}
+                <a href="/" class="nav-link nav-home-link">🏠 Dashboard</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
     <div class="container">
         {% block content %}{% endblock %}
     </div>

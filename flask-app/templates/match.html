@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 <header>
-    <button class="back-btn" onclick="window.location.href='/api/{{ api_name|urlencode }}'">← Back</button>
     <h2>PAD# {{ pad_num }} - {{ api_name }} - {{ matched_count }}/{{ total_rows }} matched</h2>
 </header>
 

@@ -17,8 +17,63 @@ body {
     padding: 20px;
 }
 
+/* Navigation Bar Styles */
+.navigation-bar {
+    background: #2c3e50;
+    padding: 15px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-title {
+    color: white;
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-link {
+    background: #3498db;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.nav-link:hover {
+    background: #2980b9;
+}
+
+.nav-home-link {
+    background: #27ae60;
+}
+
+.nav-home-link:hover {
+    background: #229954;
+}
+
+.nav-separator {
+    color: #ecf0f1;
+    margin: 0 5px;
+}
+
 /* Header Styles */
-header {
+header, .dashboard-header {
     background: white;
     padding: 20px;
     border-radius: 8px;

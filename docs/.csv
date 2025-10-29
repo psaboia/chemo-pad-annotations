@@ -40,3 +40,58 @@ More notes:
   > i like better this layout.
   I have a sugestion about the orther. Now you are foucusing the annotation in the left and dataset options in the right.
   Maybe we can do another version that can have the dataset in the left and the possible annotaion in the right. For exam
+
+
+
+
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+sudo tee /etc/supervisor/conf.d/chemopad.conf > /dev/null <<EOF
+[program:chemopad]
+command=/home/pmoreira/chemopad/venv/bin/gunicorn -c /home/pmoreira/chemopad/deploy/gunicorn_config.py app_production:app
+directory=/home/pmoreira/chemopad/flask-app
+user=pmoreira
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/chemopad.log
+environment=PATH="/home/pmoreira/chemopad/venv/bin",FLASK_SECRET_KEY="$SECRET_KEY"
+EOF
+
+
+cat > ~/check_ports.sh << 'EOF'
+#!/bin/bash
+echo "Checking which ports are accessible from outside..."
+echo "Your current SSH connection is from: $SSH_CLIENT"
+
+# Common ports to test
+ports=(80 443 3000 5000 8000 8080 8443 8888 9000)
+
+for port in "${ports[@]}"; do
+    # Try to listen on the port briefly
+    timeout 1 nc -l -p $port 2>/dev/null &
+    pid=$!
+    sleep 0.1
+
+    if kill -0 $pid 2>/dev/null; then
+        kill $pid 2>/dev/null
+        echo "Port $port: Available to use"
+    else
+        echo "Port $port: Already in use or blocked"
+    fi
+done
+
+echo -e "\nCurrent UFW rules:"
+sudo ufw status | grep -v "^$"
+EOF
+
+chmod +x ~/check_ports.sh
+./check_ports.sh
+
+
+It worked and i tested the download csv. I want the field `matched_sample_id` be right after the `matched_id`. also i noted the field `matched_url` is empty even when i have
+  assigend on card. this is because project_data do not have url, but it has a field `processed_file_location` which you can use to make the url by using the prefix
+  `https://pad.crc.nd.edu/` + `processed_file_location`.
+
+
+  do you think we can keep the annotations with missing_card = TRUE, but in that case instead of the student make a match we could give a field to him to input a id from
+  project_data and them display it as a normal option to seletc like in the case card is not missing.

@@ -188,16 +188,23 @@ def save_match():
 @app.route('/api/export')
 def export_data():
     """Export all matched data to CSV"""
-    # Create export dataframe
-    export_df = annotations_df.copy()
+    # Create export dataframe - only keep original annotation columns
+    original_columns = ['PAD#', 'Camera', 'Lighting (lightbox, benchtop, benchtop dark)',
+                       'black/white background', 'API', 'Sample',
+                       'mg concentration (w/w mg/mg or w/v mg/mL)', '% Conc']
+
+    # Only keep original columns that exist
+    keep_columns = [col for col in original_columns if col in annotations_df.columns]
+    export_df = annotations_df[keep_columns + ['row_id']].copy()
 
     # Add matched_id column
     export_df['matched_id'] = export_df['row_id'].map(matches)
 
     # Add project_cards fields for matched rows
-    project_fields = ['sample_name', 'quantity', 'camera_type_1', 'deleted', 'date_of_creation']
+    project_fields = ['sample_name', 'quantity', 'camera_type_1', 'deleted',
+                     'date_of_creation', 'url', 'sample_id']
     for field in project_fields:
-        export_df[f'project_{field}'] = None
+        export_df[f'matched_{field}'] = None
 
     # Fill in project data for matched rows
     for row_id, card_id in matches.items():
@@ -207,14 +214,15 @@ def export_data():
 
             for field in project_fields:
                 if field in card_data:
-                    export_df.at[idx, f'project_{field}'] = card_data[field]
+                    export_df.at[idx, f'matched_{field}'] = card_data[field]
 
     # Remove internal row_id column
     export_df = export_df.drop(columns=['row_id'])
 
     # Generate filename with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'../data/chemopad_matched_export_{timestamp}.csv'
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    filename = os.path.join(base_dir, 'data', f'chemopad_matched_export_{timestamp}.csv')
     export_df.to_csv(filename, index=False)
 
     return send_file(filename, as_attachment=True, download_name=f'chemopad_export_{timestamp}.csv')

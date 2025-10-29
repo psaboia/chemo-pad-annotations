@@ -471,7 +471,7 @@ header h1, header h2 {
 
 .info-row {
     display: flex;
-    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 5px;
     font-size: 14px;
 }

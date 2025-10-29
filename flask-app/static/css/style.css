@@ -304,7 +304,7 @@ header h1, header h2 {
 
 .row-content {
     display: flex;
-    min-height: 300px;
+    height: 500px;
 }
 
 .annotation-info {

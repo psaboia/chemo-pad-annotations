@@ -25,20 +25,27 @@ def load_data():
     """Load all CSV data"""
     global annotations_df, project_cards_df
 
+    # Use absolute paths for production
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, 'data')
+
     # Load annotations (skip missing cards)
-    annotations_df = pd.read_csv('../data/chemoPAD-student-annotations-with-flags.csv')
+    annotations_file = os.path.join(data_dir, 'chemoPAD-student-annotations-with-flags.csv')
+    annotations_df = pd.read_csv(annotations_file)
     annotations_df = annotations_df[annotations_df['missing_card'] != True].copy()
     annotations_df['row_id'] = range(len(annotations_df))
 
     # Load project cards
-    project_cards_df = pd.read_csv('../data/project_cards.csv')
+    project_cards_file = os.path.join(data_dir, 'project_cards.csv')
+    project_cards_df = pd.read_csv(project_cards_file)
 
-    logger.info(f"Loaded {len(annotations_df)} annotations")
-    logger.info(f"Loaded {len(project_cards_df)} project cards")
+    logger.info(f"Loaded {len(annotations_df)} annotations from {annotations_file}")
+    logger.info(f"Loaded {len(project_cards_df)} project cards from {project_cards_file}")
 
     # Load existing matches if any
-    if os.path.exists('../data/matches.json'):
-        with open('../data/matches.json', 'r') as f:
+    matches_file = os.path.join(data_dir, 'matches.json')
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
             global matches
             matches = json.load(f)
             # Convert keys to int
@@ -170,8 +177,10 @@ def save_match():
         # Unmatching
         del matches[row_id]
 
-    # Save matches to file
-    with open('../data/matches.json', 'w') as f:
+    # Save matches to file using absolute path
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    matches_file = os.path.join(base_dir, 'data', 'matches.json')
+    with open(matches_file, 'w') as f:
         json.dump(matches, f, indent=2)
 
     return jsonify({'success': True})

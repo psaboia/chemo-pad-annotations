@@ -267,8 +267,26 @@ def save_note():
 @app.route('/api/export')
 def export_data():
     """Export all matched data to CSV"""
-    # Load ALL annotations including those with missing_card=True
+    # Reload notes and matches from files to get latest data
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # Reload matches
+    matches_file = os.path.join(base_dir, 'data', 'matches.json')
+    global matches
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
+            matches = json.load(f)
+            matches = {int(k): v for k, v in matches.items()}
+
+    # Reload notes
+    notes_file = os.path.join(base_dir, 'data', 'notes.json')
+    global notes
+    if os.path.exists(notes_file):
+        with open(notes_file, 'r') as f:
+            notes = json.load(f)
+            notes = {int(k): v for k, v in notes.items()}
+
+    # Load ALL annotations including those with missing_card=True
     annotations_file = os.path.join(base_dir, 'data', 'chemoPAD-student-annotations-with-flags.csv')
     all_annotations_df = pd.read_csv(annotations_file)
 

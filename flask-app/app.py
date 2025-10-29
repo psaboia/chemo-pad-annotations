@@ -96,6 +96,16 @@ def dashboard():
 @app.route('/api/<api_name>')
 def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
+    # Reload matches from file to get latest data
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    matches_file = os.path.join(base_dir, 'data', 'matches.json')
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
+            global matches
+            matches = json.load(f)
+            # Convert keys to int
+            matches = {int(k): v for k, v in matches.items()}
+
     api_data = annotations_df[annotations_df['API'] == api_name]
 
     pad_stats = []
@@ -134,6 +144,16 @@ def pad_list(api_name):
 @app.route('/match/<api_name>/<int:pad_num>')
 def match_page(api_name, pad_num):
     """Annotation Matching page - Level 3"""
+    # Reload matches from file to get latest data
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    matches_file = os.path.join(base_dir, 'data', 'matches.json')
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
+            global matches
+            matches = json.load(f)
+            # Convert keys to int
+            matches = {int(k): v for k, v in matches.items()}
+
     # Get all annotation rows for this PAD#
     pad_annotations = annotations_df[
         (annotations_df['API'] == api_name) &

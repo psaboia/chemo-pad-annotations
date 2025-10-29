@@ -309,9 +309,18 @@ def export_data():
     # Add URL field (will be generated from processed_file_location)
     export_df['matched_url'] = None
 
+    # Add notes column for student observations
+    export_df['notes'] = None
+
     # Fill in project data for matched rows (only for rows with missing_card=False)
     for row_id, card_id in matches.items():
-        if card_id in project_cards_df['id'].values:
+        if card_id == "no_match":
+            # For no_match annotations, still add the notes
+            orig_idx = matchable_df[matchable_df['row_id'] == row_id].index[0]
+            if row_id in notes:
+                export_df.at[orig_idx, 'notes'] = notes[row_id]
+            export_df.at[orig_idx, 'matched_id'] = "no_match"
+        elif card_id in project_cards_df['id'].values:
             card_data = project_cards_df[project_cards_df['id'] == card_id].iloc[0]
             # Find the original index for this row_id
             orig_idx = matchable_df[matchable_df['row_id'] == row_id].index[0]
@@ -327,6 +336,10 @@ def export_data():
             # Generate URL from processed_file_location
             if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
                 export_df.at[orig_idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
+
+            # Add notes if any
+            if row_id in notes:
+                export_df.at[orig_idx, 'notes'] = notes[row_id]
 
     # Remove processed_file_location (we have URL instead) but keep missing_card column
     export_df = export_df.drop(columns=['matched_processed_file_location'], errors='ignore')

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import logging
 from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
+import markdown
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'chemopad-secret-key-2024')
@@ -114,6 +115,25 @@ def logout():
     session.clear()
     logger.info("User logged out")
     return redirect(url_for('login'))
+
+@app.route('/help')
+@login_required
+def help():
+    """Display help page from quick-start.md"""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        help_file = os.path.join(base_dir, 'docs', 'quick-start.md')
+
+        with open(help_file, 'r') as f:
+            content = f.read()
+
+        # Convert markdown to HTML
+        html_content = markdown.markdown(content, extensions=['tables', 'fenced_code'])
+
+        return render_template('help.html', content=html_content)
+    except Exception as e:
+        logger.error(f"Error loading help content: {e}")
+        return render_template('help.html', content='<p>Help content not available</p>')
 
 @app.route('/')
 @login_required

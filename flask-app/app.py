@@ -29,7 +29,8 @@ def add_cache_control(response):
 # Global data storage
 annotations_df = None
 project_cards_df = None
-matches = {}  # {annotation_row_id: project_card_id}
+matches = {}
+notes = {}  # Store notes for each annotation  # {annotation_row_id: project_card_id}
 
 def load_data():
     """Load all CSV data"""
@@ -58,8 +59,17 @@ def load_data():
         with open(matches_file, 'r') as f:
             global matches
             matches = json.load(f)
+            # Convert keys to int, handle "no_match" special value
+            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
+
+    # Load existing notes if any
+    notes_file = os.path.join(data_dir, 'notes.json')
+    if os.path.exists(notes_file):
+        with open(notes_file, 'r') as f:
+            global notes
+            notes = json.load(f)
             # Convert keys to int
-            matches = {int(k): v for k, v in matches.items()}
+            notes = {int(k): v for k, v in notes.items()}
 
 @app.route('/')
 def dashboard():
@@ -74,7 +84,7 @@ def dashboard():
         api_data = annotations_df[annotations_df['API'] == api]
         unique_pads = api_data['PAD#'].unique()
 
-        # Count completed PAD#s (all rows for that PAD# are matched)
+        # Count completed PAD#s (all rows for that PAD# are matched or marked as no_match)
         completed_pads = 0
         for pad in unique_pads:
             pad_rows = api_data[api_data['PAD#'] == pad]
@@ -154,6 +164,15 @@ def match_page(api_name, pad_num):
             # Convert keys to int
             matches = {int(k): v for k, v in matches.items()}
 
+    # Reload notes from file to get latest data
+    notes_file = os.path.join(base_dir, 'data', 'notes.json')
+    if os.path.exists(notes_file):
+        with open(notes_file, 'r') as f:
+            global notes
+            notes = json.load(f)
+            # Convert keys to int
+            notes = {int(k): v for k, v in notes.items()}
+
     # Get all annotation rows for this PAD#
     pad_annotations = annotations_df[
         (annotations_df['API'] == api_name) &
@@ -169,11 +188,15 @@ def match_page(api_name, pad_num):
     used_ids = set(matches.values())
     candidates['is_used'] = candidates['id'].isin(used_ids)
 
-    # Prepare annotation rows with their matches
+    # Prepare annotation rows with their matches and notes
     rows_data = []
     for idx, row in pad_annotations.iterrows():
         row_dict = row.to_dict()
-        row_dict['matched_id'] = matches.get(row['row_id'])
+        row_id = row['row_id']
+        matched_id = matches.get(row_id)
+        row_dict['matched_id'] = matched_id if matched_id != "no_match" else None
+        row_dict['is_no_match'] = matched_id == "no_match"
+        row_dict['notes'] = notes.get(row_id, '')
         rows_data.append(row_dict)
 
     # Convert candidates to dict for JSON
@@ -195,14 +218,19 @@ def save_match():
     """Save a match between annotation row and project card"""
     data = request.json
     row_id = int(data['row_id'])
-    card_id = int(data['card_id']) if data['card_id'] else None
+    card_id = data.get('card_id')
+    is_no_match = data.get('is_no_match', False)
 
-    # Check if card_id is already used
-    if card_id and card_id in matches.values():
-        return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
-
-    if card_id:
+    # Convert card_id to int if it's not None/empty and not a special value
+    if card_id and card_id != "no_match":
+        card_id = int(card_id)
+        # Check if card_id is already used by another annotation
+        if card_id in matches.values():
+            return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
         matches[row_id] = card_id
+    elif is_no_match:
+        # Mark as no match
+        matches[row_id] = "no_match"
     elif row_id in matches:
         # Unmatching
         del matches[row_id]
@@ -212,6 +240,27 @@ def save_match():
     matches_file = os.path.join(base_dir, 'data', 'matches.json')
     with open(matches_file, 'w') as f:
         json.dump(matches, f, indent=2)
+
+    return jsonify({'success': True})
+
+@app.route('/api/save_note', methods=['POST'])
+def save_note():
+    """Save notes for an annotation row"""
+    data = request.json
+    row_id = int(data['row_id'])
+    note_text = data.get('note', '')
+
+    if note_text:
+        notes[row_id] = note_text
+    elif row_id in notes:
+        # Delete note if empty
+        del notes[row_id]
+
+    # Save notes to file using absolute path
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    notes_file = os.path.join(base_dir, 'data', 'notes.json')
+    with open(notes_file, 'w') as f:
+        json.dump(notes, f, indent=2)
 
     return jsonify({'success': True})
 

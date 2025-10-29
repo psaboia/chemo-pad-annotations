@@ -42,7 +42,22 @@
                         <span>{{ annotation['% Conc'] or 'N/A' }}</span>
                     </div>
                 </div>
-                <button class="edit-btn" onclick="editAnnotation({{ annotation.row_id }})">Edit Fields</button>
+
+                <div class="notes-section">
+                    <label for="notes-{{ annotation.row_id }}">Notes:</label>
+                    <textarea id="notes-{{ annotation.row_id }}"
+                              class="notes-input"
+                              onchange="saveNote({{ annotation.row_id }}, this.value)"
+                              placeholder="Add observations about this annotation...">{{ annotation.notes }}</textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="edit-btn" onclick="editAnnotation({{ annotation.row_id }})">Edit Fields</button>
+                    <button class="no-match-btn {% if annotation.is_no_match %}active{% endif %}"
+                            onclick="markNoMatch({{ annotation.row_id }})">
+                        {% if annotation.is_no_match %}✓ No Match{% else %}Mark as No Match{% endif %}
+                    </button>
+                </div>
             </div>
 
             <div class="candidates-container">
@@ -143,6 +158,42 @@ function selectCandidate(rowId, candidateId) {
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
+        }
+    });
+}
+
+function markNoMatch(rowId) {
+    fetch('/api/save_match', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            row_id: rowId,
+            is_no_match: true
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function saveNote(rowId, noteText) {
+    fetch('/api/save_note', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            row_id: rowId,
+            note: noteText
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error saving note');
         }
     });
 }

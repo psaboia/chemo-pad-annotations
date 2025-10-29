@@ -304,13 +304,14 @@ header h1, header h2 {
 
 .row-content {
     display: flex;
-    height: 300px;
+    min-height: 300px;
 }
 
 .annotation-info {
     flex: 0 0 350px;
     padding: 20px;
     border-right: 1px solid #dee2e6;
+    overflow-y: auto;
 }
 
 .annotation-info h3 {
@@ -547,4 +548,63 @@ header h1, header h2 {
 .actions .export-btn {
     padding: 12px 30px;
     font-size: 16px;
+}
+
+/* Notes Section Styles */
+.notes-section {
+    margin-bottom: 15px;
+}
+
+.notes-section label {
+    display: block;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.notes-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.notes-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.action-buttons button {
+    flex: 1;
+}
+
+.no-match-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.no-match-btn:hover {
+    background: #5a6268;
+}
+
+.no-match-btn.active {
+    background: #fd7e14;
+    color: white;
 }

@@ -3,9 +3,18 @@ import pandas as pd
 import json
 import os
 from datetime import datetime
+import logging
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'chemopad-secret-key-2024'
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'chemopad-secret-key-2024')
+
+# Add proxy fix for nginx
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Global data storage
 annotations_df = None
@@ -16,20 +25,27 @@ def load_data():
     """Load all CSV data"""
     global annotations_df, project_cards_df
 
+    # Use absolute paths for production
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, 'data')
+
     # Load annotations (skip missing cards)
-    annotations_df = pd.read_csv('../data/chemoPAD-student-annotations-with-flags.csv')
+    annotations_file = os.path.join(data_dir, 'chemoPAD-student-annotations-with-flags.csv')
+    annotations_df = pd.read_csv(annotations_file)
     annotations_df = annotations_df[annotations_df['missing_card'] != True].copy()
     annotations_df['row_id'] = range(len(annotations_df))
 
     # Load project cards
-    project_cards_df = pd.read_csv('../data/project_cards.csv')
+    project_cards_file = os.path.join(data_dir, 'project_cards.csv')
+    project_cards_df = pd.read_csv(project_cards_file)
 
-    print(f"Loaded {len(annotations_df)} annotations")
-    print(f"Loaded {len(project_cards_df)} project cards")
+    logger.info(f"Loaded {len(annotations_df)} annotations from {annotations_file}")
+    logger.info(f"Loaded {len(project_cards_df)} project cards from {project_cards_file}")
 
     # Load existing matches if any
-    if os.path.exists('../data/matches.json'):
-        with open('../data/matches.json', 'r') as f:
+    matches_file = os.path.join(data_dir, 'matches.json')
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
             global matches
             matches = json.load(f)
             # Convert keys to int
@@ -161,8 +177,10 @@ def save_match():
         # Unmatching
         del matches[row_id]
 
-    # Save matches to file
-    with open('../data/matches.json', 'w') as f:
+    # Save matches to file using absolute path
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    matches_file = os.path.join(base_dir, 'data', 'matches.json')
+    with open(matches_file, 'w') as f:
         json.dump(matches, f, indent=2)
 
     return jsonify({'success': True})
@@ -170,16 +188,29 @@ def save_match():
 @app.route('/api/export')
 def export_data():
     """Export all matched data to CSV"""
-    # Create export dataframe
-    export_df = annotations_df.copy()
+    # Create export dataframe - only keep original annotation columns
+    original_columns = ['PAD#', 'Camera', 'Lighting (lightbox, benchtop, benchtop dark)',
+                       'black/white background', 'API', 'Sample',
+                       'mg concentration (w/w mg/mg or w/v mg/mL)', '% Conc']
+
+    # Only keep original columns that exist
+    keep_columns = [col for col in original_columns if col in annotations_df.columns]
+    export_df = annotations_df[keep_columns + ['row_id']].copy()
 
     # Add matched_id column
     export_df['matched_id'] = export_df['row_id'].map(matches)
 
-    # Add project_cards fields for matched rows
-    project_fields = ['sample_name', 'quantity', 'camera_type_1', 'deleted', 'date_of_creation']
+    # Add matched_sample_id right after matched_id
+    export_df['matched_sample_id'] = None
+
+    # Add other project_cards fields for matched rows
+    project_fields = ['sample_name', 'quantity', 'camera_type_1', 'deleted',
+                     'date_of_creation', 'processed_file_location']
     for field in project_fields:
-        export_df[f'project_{field}'] = None
+        export_df[f'matched_{field}'] = None
+
+    # Add URL field (will be generated from processed_file_location)
+    export_df['matched_url'] = None
 
     # Fill in project data for matched rows
     for row_id, card_id in matches.items():
@@ -187,17 +218,52 @@ def export_data():
             card_data = project_cards_df[project_cards_df['id'] == card_id].iloc[0]
             idx = export_df[export_df['row_id'] == row_id].index[0]
 
+            # Add sample_id right after matched_id
+            export_df.at[idx, 'matched_sample_id'] = card_data.get('sample_id')
+
+            # Add other fields
             for field in project_fields:
                 if field in card_data:
-                    export_df.at[idx, f'project_{field}'] = card_data[field]
+                    export_df.at[idx, f'matched_{field}'] = card_data[field]
 
-    # Remove internal row_id column
-    export_df = export_df.drop(columns=['row_id'])
+            # Generate URL from processed_file_location
+            if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
+                export_df.at[idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
+
+    # Remove internal row_id column and processed_file_location (we have URL instead)
+    export_df = export_df.drop(columns=['row_id', 'matched_processed_file_location'], errors='ignore')
+
+    # Convert ID columns to ensure they export as integers without decimals
+    # We need to handle this specially for CSV export
+    id_columns = ['PAD#', 'matched_id', 'matched_sample_id']
+
+    # Store original dtypes for restoration if needed
+    for col in id_columns:
+        if col in export_df.columns:
+            # Convert column to object type first to prevent pandas auto-conversion
+            # Handle NaN/None values carefully
+            def format_id(x):
+                # Check if value is NaN, None, or empty string
+                if pd.isna(x) or x is None or (isinstance(x, str) and x == ''):
+                    return ''
+                # Convert to integer (removing any decimal) then to string
+                try:
+                    return str(int(float(x)))
+                except (ValueError, TypeError):
+                    return ''
+
+            export_df[col] = export_df[col].apply(format_id)
+            # Force object dtype to ensure strings aren't converted back to float
+            export_df[col] = export_df[col].astype('object')
 
     # Generate filename with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'../data/chemopad_matched_export_{timestamp}.csv'
-    export_df.to_csv(filename, index=False)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    filename = os.path.join(base_dir, 'data', f'chemopad_matched_export_{timestamp}.csv')
+
+    # Export to CSV with special handling to preserve integer format
+    # Use float_format to prevent .0 decimals, but since we converted to strings, this shouldn't be needed
+    export_df.to_csv(filename, index=False, na_rep='')
 
     return send_file(filename, as_attachment=True, download_name=f'chemopad_export_{timestamp}.csv')
 
@@ -225,6 +291,13 @@ def get_stats():
         'pad_progress': (completed_pads / total_pads * 100) if total_pads > 0 else 0
     })
 
-if __name__ == '__main__':
+# Load data when module is imported (for gunicorn)
+try:
     load_data()
-    app.run(debug=True, port=5000)
+    logger.info("Data loaded successfully on module import")
+except Exception as e:
+    logger.error(f"Failed to load data on module import: {e}")
+
+if __name__ == '__main__':
+    # For development only
+    app.run(host='0.0.0.0', port=5000, debug=False)

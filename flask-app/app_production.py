@@ -230,21 +230,40 @@ def export_data():
             if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
                 export_df.at[idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
 
-    # Convert matched_id and matched_sample_id to integers (avoid float representation)
-    # Pandas converts to float when there are NaN values, so we need to fix this
-    if 'matched_id' in export_df.columns:
-        export_df['matched_id'] = export_df['matched_id'].apply(lambda x: int(x) if pd.notna(x) else None)
-    if 'matched_sample_id' in export_df.columns:
-        export_df['matched_sample_id'] = export_df['matched_sample_id'].apply(lambda x: int(x) if pd.notna(x) else None)
-
     # Remove internal row_id column and processed_file_location (we have URL instead)
     export_df = export_df.drop(columns=['row_id', 'matched_processed_file_location'], errors='ignore')
+
+    # Convert ID columns to ensure they export as integers without decimals
+    # We need to handle this specially for CSV export
+    id_columns = ['PAD#', 'matched_id', 'matched_sample_id']
+
+    # Store original dtypes for restoration if needed
+    for col in id_columns:
+        if col in export_df.columns:
+            # Convert column to object type first to prevent pandas auto-conversion
+            # Handle NaN/None values carefully
+            def format_id(x):
+                # Check if value is NaN, None, or empty string
+                if pd.isna(x) or x is None or (isinstance(x, str) and x == ''):
+                    return ''
+                # Convert to integer (removing any decimal) then to string
+                try:
+                    return str(int(float(x)))
+                except (ValueError, TypeError):
+                    return ''
+
+            export_df[col] = export_df[col].apply(format_id)
+            # Force object dtype to ensure strings aren't converted back to float
+            export_df[col] = export_df[col].astype('object')
 
     # Generate filename with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     filename = os.path.join(base_dir, 'data', f'chemopad_matched_export_{timestamp}.csv')
-    export_df.to_csv(filename, index=False)
+
+    # Export to CSV with special handling to preserve integer format
+    # Use float_format to prevent .0 decimals, but since we converted to strings, this shouldn't be needed
+    export_df.to_csv(filename, index=False, na_rep='')
 
     return send_file(filename, as_attachment=True, download_name=f'chemopad_export_{timestamp}.csv')
 

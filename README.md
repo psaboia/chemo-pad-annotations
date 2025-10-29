@@ -1,10 +1,10 @@
 # ChemoPAD Annotation Matcher
 
-Flask-based web interface for matching student annotations to dataset entries with visual verification and progress tracking.
+Flask-based web interface for matching annotations to dataset entries with visual verification and progress tracking.
 
 ## Overview
 
-This tool helps students match their PAD annotations to the correct dataset entries by:
+This tool helps match PAD annotations to the correct dataset entries by:
 - Displaying PAD images from the dataset
 - Showing candidate matches based on PAD# (sample_id)
 - Allowing selection of correct matches with visual verification
@@ -19,15 +19,15 @@ This tool helps students match their PAD annotations to the correct dataset entr
 - 624 unique sample_ids
 - Fields: `id`, `sample_id`, `sample_name`, `quantity`, `camera_type_1`, `url`, `hashlib_md5`, `image_name`
 
-### Student Annotations CSV (`data/chemoPAD-student-annotations.csv`)
+### Annotations CSV (`data/chemoPAD-student-annotations.csv`)
 - 4,253 rows (annotations)
 - 739 unique PAD#s
 - Fields: `PAD#`, `Camera`, `Lighting`, `black/white background`, `API`, `Sample`, `mg concentration`, `% Conc`
 
 ### Field Mapping
-- `sample_id` (dataset) ↔ `PAD#` (student)
-- `sample_name` (dataset) ↔ `API` (student)
-- `camera_type_1` (dataset) ↔ `Camera` (student)
+- `sample_id` (dataset) ↔ `PAD#` (annotation)
+- `sample_name` (dataset) ↔ `API` (annotation)
+- `camera_type_1` (dataset) ↔ `Camera` (annotation)
 
 ## Installation
 
@@ -57,10 +57,10 @@ The app will open at **http://localhost:5001**
 
 ### 3. Match Annotations
 
-For each student annotation:
+For each annotation:
 
 1. **Click "Edit"** on a row to open the matching interface
-2. **Review Student Data** (left panel):
+2. **Review Annotation Data** (left panel):
    - See the annotation's PAD#, Camera, API, Sample, and concentrations
 3. **Review Candidates** (right panel):
    - Scroll through matching candidates from the dataset
@@ -127,22 +127,22 @@ The exported CSV includes:
 - **Data Storage**:
   - Session data: `/session/` folder
     - `matches.json`: Maps annotation rows to dataset entries
-    - `notes.json`: Stores student notes
+    - `notes.json`: Stores notes
   - Generated exports: `/exports/` folder (timestamped CSV files)
   - Source data: `/data/` folder (original CSV files)
 
 ### Matching Algorithm
 
-1. **Filter by PAD#**: Find all dataset rows where `sample_id` equals the student's `PAD#`
+1. **Filter by PAD#**: Find all dataset rows where `sample_id` equals the annotation's `PAD#`
 2. **Sort by Relevance**: Display best matches first
-3. **Visual Verification**: Student reviews images and information
-4. **Manual Selection**: Student clicks "Select" to confirm match
+3. **Visual Verification**: Users review images and information
+4. **Manual Selection**: Users click "Select" to confirm match
 
 ### Why Manual Matching?
 
 - Multiple images exist per `sample_id` (different cameras, lighting conditions)
 - Field values may be incorrect or differ in naming conventions
-- Students need visual verification against actual images
+- Users need visual verification against actual images
 - Allows documentation of edge cases and notes
 
 ### Data Persistence
@@ -154,9 +154,9 @@ The exported CSV includes:
 
 ## Notes
 
-- Student annotations (4,253 rows) exceed dataset entries (3,609 rows)
-- Some PAD#s in student CSV may not exist in dataset
-- Some dataset rows may have multiple student annotations
+- Annotations (4,253 rows) exceed dataset entries (3,609 rows)
+- Some PAD#s in the annotations CSV may not exist in dataset
+- Some dataset rows may have multiple annotations
 - Images are loaded from remote URLs (requires internet connection)
 
 ## Troubleshooting
@@ -172,7 +172,7 @@ The exported CSV includes:
 - Some remote images may be unavailable
 
 **Missing PAD#s**:
-- Some student PAD#s may not exist in dataset
+- Some PAD#s may not exist in dataset
 - Use "Mark as No Match" to document these cases
 - Notes are helpful for tracking issues
 

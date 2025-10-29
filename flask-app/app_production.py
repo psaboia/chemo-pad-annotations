@@ -230,6 +230,13 @@ def export_data():
             if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
                 export_df.at[idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
 
+    # Convert matched_id and matched_sample_id to integers (avoid float representation)
+    # Pandas converts to float when there are NaN values, so we need to fix this
+    if 'matched_id' in export_df.columns:
+        export_df['matched_id'] = export_df['matched_id'].apply(lambda x: int(x) if pd.notna(x) else None)
+    if 'matched_sample_id' in export_df.columns:
+        export_df['matched_sample_id'] = export_df['matched_sample_id'].apply(lambda x: int(x) if pd.notna(x) else None)
+
     # Remove internal row_id column and processed_file_location (we have URL instead)
     export_df = export_df.drop(columns=['row_id', 'matched_processed_file_location'], errors='ignore')
 

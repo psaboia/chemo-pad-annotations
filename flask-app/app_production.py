@@ -200,11 +200,17 @@ def export_data():
     # Add matched_id column
     export_df['matched_id'] = export_df['row_id'].map(matches)
 
-    # Add project_cards fields for matched rows
+    # Add matched_sample_id right after matched_id
+    export_df['matched_sample_id'] = None
+
+    # Add other project_cards fields for matched rows
     project_fields = ['sample_name', 'quantity', 'camera_type_1', 'deleted',
-                     'date_of_creation', 'url', 'sample_id']
+                     'date_of_creation', 'processed_file_location']
     for field in project_fields:
         export_df[f'matched_{field}'] = None
+
+    # Add URL field (will be generated from processed_file_location)
+    export_df['matched_url'] = None
 
     # Fill in project data for matched rows
     for row_id, card_id in matches.items():
@@ -212,12 +218,20 @@ def export_data():
             card_data = project_cards_df[project_cards_df['id'] == card_id].iloc[0]
             idx = export_df[export_df['row_id'] == row_id].index[0]
 
+            # Add sample_id right after matched_id
+            export_df.at[idx, 'matched_sample_id'] = card_data.get('sample_id')
+
+            # Add other fields
             for field in project_fields:
                 if field in card_data:
                     export_df.at[idx, f'matched_{field}'] = card_data[field]
 
-    # Remove internal row_id column
-    export_df = export_df.drop(columns=['row_id'])
+            # Generate URL from processed_file_location
+            if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
+                export_df.at[idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
+
+    # Remove internal row_id column and processed_file_location (we have URL instead)
+    export_df = export_df.drop(columns=['row_id', 'matched_processed_file_location'], errors='ignore')
 
     # Generate filename with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

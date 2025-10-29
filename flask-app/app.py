@@ -122,6 +122,7 @@ def logout():
 def help():
     """Display help page from quick-start.md"""
     try:
+        import re
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         help_file = os.path.join(base_dir, 'docs', 'quick-start.md')
 
@@ -130,6 +131,9 @@ def help():
 
         # Convert markdown to HTML
         html_content = markdown.markdown(content, extensions=['tables', 'fenced_code'])
+
+        # Rewrite image paths from 'figs/...' to '/static/img/help/...'
+        html_content = re.sub(r'src="figs/([^"]+)"', r'src="/static/img/help/\1"', html_content)
 
         return render_template('help.html', content=html_content)
     except Exception as e:

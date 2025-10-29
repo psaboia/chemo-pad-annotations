@@ -188,17 +188,35 @@ def save_match():
 @app.route('/api/export')
 def export_data():
     """Export all matched data to CSV"""
-    # Create export dataframe - only keep original annotation columns
+    # Load ALL annotations including those with missing_card=True
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    annotations_file = os.path.join(base_dir, 'data', 'chemoPAD-student-annotations-with-flags.csv')
+    all_annotations_df = pd.read_csv(annotations_file)
+
+    # Create export dataframe - keep original annotation columns + missing_card flag
     original_columns = ['PAD#', 'Camera', 'Lighting (lightbox, benchtop, benchtop dark)',
                        'black/white background', 'API', 'Sample',
-                       'mg concentration (w/w mg/mg or w/v mg/mL)', '% Conc']
+                       'mg concentration (w/w mg/mg or w/v mg/mL)', '% Conc', 'missing_card']
 
     # Only keep original columns that exist
-    keep_columns = [col for col in original_columns if col in annotations_df.columns]
-    export_df = annotations_df[keep_columns + ['row_id']].copy()
+    keep_columns = [col for col in original_columns if col in all_annotations_df.columns]
+    export_df = all_annotations_df[keep_columns].copy()
 
-    # Add matched_id column
-    export_df['matched_id'] = export_df['row_id'].map(matches)
+    # Add row_id only for rows that are matchable (missing_card=False)
+    # This is needed to map to matches dictionary
+    matchable_df = all_annotations_df[all_annotations_df['missing_card'] != True].copy()
+    matchable_df['row_id'] = range(len(matchable_df))
+
+    # Create mapping from original index to row_id
+    index_to_rowid = dict(zip(matchable_df.index, matchable_df['row_id']))
+
+    # Add matched_id column - map using the index_to_rowid mapping
+    export_df['matched_id'] = None
+    for idx in export_df.index:
+        if idx in index_to_rowid:
+            row_id = index_to_rowid[idx]
+            if row_id in matches:
+                export_df.at[idx, 'matched_id'] = matches[row_id]
 
     # Add matched_sample_id right after matched_id
     export_df['matched_sample_id'] = None
@@ -212,26 +230,27 @@ def export_data():
     # Add URL field (will be generated from processed_file_location)
     export_df['matched_url'] = None
 
-    # Fill in project data for matched rows
+    # Fill in project data for matched rows (only for rows with missing_card=False)
     for row_id, card_id in matches.items():
         if card_id in project_cards_df['id'].values:
             card_data = project_cards_df[project_cards_df['id'] == card_id].iloc[0]
-            idx = export_df[export_df['row_id'] == row_id].index[0]
+            # Find the original index for this row_id
+            orig_idx = matchable_df[matchable_df['row_id'] == row_id].index[0]
 
             # Add sample_id right after matched_id
-            export_df.at[idx, 'matched_sample_id'] = card_data.get('sample_id')
+            export_df.at[orig_idx, 'matched_sample_id'] = card_data.get('sample_id')
 
             # Add other fields
             for field in project_fields:
                 if field in card_data:
-                    export_df.at[idx, f'matched_{field}'] = card_data[field]
+                    export_df.at[orig_idx, f'matched_{field}'] = card_data[field]
 
             # Generate URL from processed_file_location
             if 'processed_file_location' in card_data and pd.notna(card_data['processed_file_location']):
-                export_df.at[idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
+                export_df.at[orig_idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
 
-    # Remove internal row_id column and processed_file_location (we have URL instead)
-    export_df = export_df.drop(columns=['row_id', 'matched_processed_file_location'], errors='ignore')
+    # Remove processed_file_location (we have URL instead) but keep missing_card column
+    export_df = export_df.drop(columns=['matched_processed_file_location'], errors='ignore')
 
     # Convert ID columns to ensure they export as integers without decimals
     # We need to handle this specially for CSV export

@@ -397,6 +397,9 @@ def export_data():
                 # Check if value is NaN, None, or empty string
                 if pd.isna(x) or x is None or (isinstance(x, str) and x == ''):
                     return ''
+                # Check if value is "no_match" - special case to preserve
+                if x == "no_match":
+                    return "no_match"
                 # Convert to integer (removing any decimal) then to string
                 try:
                     return str(int(float(x)))

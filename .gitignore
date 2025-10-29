@@ -41,4 +41,4 @@ session/
 uv.lock
 .python-version
 
-docs/.csv
+.csv

@@ -1,13 +1,23 @@
-from flask import Flask, render_template, jsonify, request, send_file
+from flask import Flask, render_template, jsonify, request, send_file, session, redirect, url_for
 import pandas as pd
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'chemopad-secret-key-2024')
+
+# Session configuration
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True if using HTTPS
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # 30 minute timeout
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
+# Get password from environment variable
+PASSWORD = os.environ.get('CHEMOPAD_PASSWORD', 'chemopad2024')
 
 # Add proxy fix for nginx
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -25,6 +35,18 @@ def add_cache_control(response):
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
     return response
+
+def login_required(f):
+    """Decorator to require login for a route"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        session.permanent = True
+        app.permanent_session_lifetime = timedelta(minutes=30)
+
+        if 'authenticated' not in session or not session['authenticated']:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Global data storage
 annotations_df = None
@@ -71,7 +93,30 @@ def load_data():
             # Convert keys to int
             notes = {int(k): v for k, v in notes.items()}
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page with password authentication"""
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == PASSWORD:
+            session['authenticated'] = True
+            session.permanent = True
+            logger.info("User successfully authenticated")
+            return redirect(url_for('dashboard'))
+        else:
+            logger.warning("Failed login attempt")
+            return render_template('login.html', error='Invalid password')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Logout and clear session"""
+    session.clear()
+    logger.info("User logged out")
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def dashboard():
     """API Dashboard - Level 1"""
     # Group by API
@@ -104,6 +149,7 @@ def dashboard():
     return render_template('dashboard.html', apis=api_stats)
 
 @app.route('/api/<api_name>')
+@login_required
 def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
     # Reload matches from file to get latest data
@@ -152,6 +198,7 @@ def pad_list(api_name):
                          api_progress=api_progress)
 
 @app.route('/match/<api_name>/<int:pad_num>')
+@login_required
 def match_page(api_name, pad_num):
     """Annotation Matching page - Level 3"""
     # Reload matches from file to get latest data
@@ -214,6 +261,7 @@ def match_page(api_name, pad_num):
                          total_rows=len(rows_data))
 
 @app.route('/api/save_match', methods=['POST'])
+@login_required
 def save_match():
     """Save a match between annotation row and project card"""
     data = request.json
@@ -250,6 +298,7 @@ def save_match():
     return jsonify({'success': True})
 
 @app.route('/api/save_note', methods=['POST'])
+@login_required
 def save_note():
     """Save notes for an annotation row"""
     data = request.json
@@ -271,6 +320,7 @@ def save_note():
     return jsonify({'success': True})
 
 @app.route('/api/export')
+@login_required
 def export_data():
     """Export all matched data to CSV"""
     # Reload notes and matches from files to get latest data
@@ -428,6 +478,7 @@ def export_data():
     return send_file(filename, as_attachment=True, download_name=f'chemopad_export_{timestamp}.csv')
 
 @app.route('/api/stats')
+@login_required
 def get_stats():
     """Get overall statistics"""
     total_annotations = len(annotations_df)

@@ -33,9 +33,9 @@ Thumbs.db
 # Project specific
 *.log
 
-# Generated exports and student work files
+# Generated exports and session files
 exports/
-student-work/
+session/
 
 # uv
 uv.lock

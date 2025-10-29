@@ -54,7 +54,7 @@ def load_data():
     logger.info(f"Loaded {len(project_cards_df)} project cards from {project_cards_file}")
 
     # Load existing matches if any
-    student_work_dir = os.path.join(base_dir, 'student-work')
+    student_work_dir = os.path.join(base_dir, 'session')
     matches_file = os.path.join(student_work_dir, 'matches.json')
     if os.path.exists(matches_file):
         with open(matches_file, 'r') as f:
@@ -109,7 +109,7 @@ def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
     # Reload matches from file to get latest data
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    matches_file = os.path.join(base_dir, 'student-work', 'matches.json')
+    matches_file = os.path.join(base_dir, 'session', 'matches.json')
     if os.path.exists(matches_file):
         with open(matches_file, 'r') as f:
             global matches
@@ -157,7 +157,7 @@ def match_page(api_name, pad_num):
     """Annotation Matching page - Level 3"""
     # Reload matches from file to get latest data
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    matches_file = os.path.join(base_dir, 'student-work', 'matches.json')
+    matches_file = os.path.join(base_dir, 'session', 'matches.json')
     if os.path.exists(matches_file):
         with open(matches_file, 'r') as f:
             global matches
@@ -166,7 +166,7 @@ def match_page(api_name, pad_num):
             matches = {int(k): v for k, v in matches.items()}
 
     # Reload notes from file to get latest data
-    notes_file = os.path.join(base_dir, 'student-work', 'notes.json')
+    notes_file = os.path.join(base_dir, 'session', 'notes.json')
     if os.path.exists(notes_file):
         with open(notes_file, 'r') as f:
             global notes
@@ -238,9 +238,9 @@ def save_match():
 
     # Save matches to file using absolute path
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    student_work_dir = os.path.join(base_dir, 'student-work')
+    student_work_dir = os.path.join(base_dir, 'session')
 
-    # Create student-work directory if it doesn't exist
+    # Create session directory if it doesn't exist
     if not os.path.exists(student_work_dir):
         os.makedirs(student_work_dir)
 
@@ -265,9 +265,9 @@ def save_note():
 
     # Save notes to file using absolute path
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    student_work_dir = os.path.join(base_dir, 'student-work')
+    student_work_dir = os.path.join(base_dir, 'session')
 
-    # Create student-work directory if it doesn't exist
+    # Create session directory if it doesn't exist
     if not os.path.exists(student_work_dir):
         os.makedirs(student_work_dir)
 
@@ -284,7 +284,7 @@ def export_data():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Reload matches
-    matches_file = os.path.join(base_dir, 'student-work', 'matches.json')
+    matches_file = os.path.join(base_dir, 'session', 'matches.json')
     global matches
     if os.path.exists(matches_file):
         with open(matches_file, 'r') as f:
@@ -292,7 +292,7 @@ def export_data():
             matches = {int(k): v for k, v in matches.items()}
 
     # Reload notes
-    notes_file = os.path.join(base_dir, 'student-work', 'notes.json')
+    notes_file = os.path.join(base_dir, 'session', 'notes.json')
     global notes
     if os.path.exists(notes_file):
         with open(notes_file, 'r') as f:

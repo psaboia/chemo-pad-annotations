@@ -9,6 +9,7 @@
     <div class="annotation-row" data-row-id="{{ annotation.row_id }}">
         <div class="row-header">
             <span class="row-number">Row {{ loop.index }}/{{ total_rows }}</span>
+            <span class="annot-reference">(Annotation #{{ annotation.annot_id }})</span>
             {% if annotation.matched_id %}
             <span class="status-icon">✅</span>
             {% else %}

@@ -194,7 +194,7 @@ def export_data():
     all_annotations_df = pd.read_csv(annotations_file)
 
     # Create export dataframe - keep original annotation columns + missing_card flag
-    original_columns = ['PAD#', 'Camera', 'Lighting (lightbox, benchtop, benchtop dark)',
+    original_columns = ['annot_id', 'PAD#', 'Camera', 'Lighting (lightbox, benchtop, benchtop dark)',
                        'black/white background', 'API', 'Sample',
                        'mg concentration (w/w mg/mg or w/v mg/mL)', '% Conc', 'missing_card']
 
@@ -254,7 +254,7 @@ def export_data():
 
     # Convert ID columns to ensure they export as integers without decimals
     # We need to handle this specially for CSV export
-    id_columns = ['PAD#', 'matched_id', 'matched_sample_id']
+    id_columns = ['annot_id', 'PAD#', 'matched_id', 'matched_sample_id']
 
     # Store original dtypes for restoration if needed
     for col in id_columns:

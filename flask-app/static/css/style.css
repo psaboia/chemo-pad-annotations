@@ -291,6 +291,13 @@ header h1, header h2 {
     font-weight: 600;
 }
 
+.annot-reference {
+    margin-left: 10px;
+    color: #6c757d;
+    font-size: 0.95em;
+    font-style: italic;
+}
+
 .status-icon {
     font-size: 20px;
 }

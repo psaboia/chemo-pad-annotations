@@ -31,11 +31,11 @@ instance/
 Thumbs.db
 
 # Project specific
-matches.json
 *.log
 
-# Generated exports
+# Generated exports and student work files
 exports/
+student-work/
 
 # uv
 uv.lock

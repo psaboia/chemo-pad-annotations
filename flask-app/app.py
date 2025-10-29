@@ -398,7 +398,13 @@ def export_data():
     # Generate filename with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    filename = os.path.join(base_dir, 'data', f'chemopad_matched_export_{timestamp}.csv')
+    exports_dir = os.path.join(base_dir, 'exports')
+
+    # Create exports directory if it doesn't exist
+    if not os.path.exists(exports_dir):
+        os.makedirs(exports_dir)
+
+    filename = os.path.join(exports_dir, f'chemopad_matched_export_{timestamp}.csv')
 
     # Export to CSV with special handling to preserve integer format
     # Use float_format to prevent .0 decimals, but since we converted to strings, this shouldn't be needed

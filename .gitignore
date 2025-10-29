@@ -34,6 +34,9 @@ Thumbs.db
 matches.json
 *.log
 
+# Generated exports
+exports/
+
 # uv
 uv.lock
 .python-version

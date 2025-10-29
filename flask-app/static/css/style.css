@@ -397,6 +397,11 @@ header h1, header h2 {
     padding: 15px;
     margin-bottom: 15px;
     background: #f8f9fa;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+    align-items: start;
 }
 
 .candidate-card.selected {
@@ -413,7 +418,9 @@ header h1, header h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+    grid-column: 1 / -1;
+    grid-row: 1;
 }
 
 .used-badge {
@@ -433,7 +440,9 @@ header h1, header h2 {
 }
 
 .candidate-image {
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+    grid-column: 1;
+    grid-row: 2;
 }
 
 .candidate-image img {
@@ -455,7 +464,9 @@ header h1, header h2 {
 }
 
 .candidate-info {
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+    grid-column: 2;
+    grid-row: 2;
 }
 
 .info-row {
@@ -482,6 +493,8 @@ header h1, header h2 {
     padding: 8px;
     border-radius: 4px;
     cursor: pointer;
+    grid-column: 1 / -1;
+    grid-row: 3;
 }
 
 .select-btn:hover {

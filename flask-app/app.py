@@ -16,6 +16,16 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Add after_request handler to prevent caching of dynamic pages
+@app.after_request
+def add_cache_control(response):
+    # Prevent caching for HTML pages (dynamic content)
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 # Global data storage
 annotations_df = None
 project_cards_df = None

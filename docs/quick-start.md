@@ -172,7 +172,7 @@ If you encounter any issues:
 1. Check the "Tips for Successful Matching" section above
 2. Try refreshing your browser
 3. Verify your internet connection
-4. Contact the system administrator for technical support
+4. Contact the pmoreie@crc.nd.edu for technical support
 
 ---
 

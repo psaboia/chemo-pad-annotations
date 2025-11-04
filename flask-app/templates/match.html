@@ -12,6 +12,8 @@
             <span class="annot-reference">(Annotation #{{ annotation.annot_id }})</span>
             {% if annotation.matched_id %}
             <span class="status-icon">✅</span>
+            {% elif annotation.is_no_match %}
+            <span class="status-icon">❎</span>
             {% else %}
             <span class="status-icon">⚠️</span>
             {% endif %}

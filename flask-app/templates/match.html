@@ -218,15 +218,12 @@ function skipToNext() {
     window.location.href = '/api/{{ api_name|urlencode }}';
 }
 
-// Scroll to the row that was just updated after page reload
+// Highlight the row that was just updated after page reload
 window.addEventListener('load', function() {
     if (window.location.hash) {
         const element = document.querySelector(window.location.hash);
         if (element) {
-            // Scroll to the element
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // Highlight the row briefly to show it was updated
+            // Highlight the row briefly to show it was updated (no scrolling)
             element.style.transition = 'background-color 0.3s ease';
             element.style.backgroundColor = '#fffacd';
 

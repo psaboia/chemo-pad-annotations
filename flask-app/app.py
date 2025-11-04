@@ -274,8 +274,8 @@ def match_page(api_name, pad_num):
     # Convert candidates to dict for JSON
     candidates_data = candidates.to_dict('records')
 
-    # Calculate progress
-    matched_count = sum(1 for r in rows_data if r['matched_id'])
+    # Calculate progress - count both matched candidates and no_match rows
+    matched_count = sum(1 for r in rows_data if r['matched_id'] or r['is_no_match'])
 
     return render_template('match.html',
                          api_name=api_name,

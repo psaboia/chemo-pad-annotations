@@ -77,7 +77,8 @@ def load_data():
     logger.info(f"Loaded {len(project_cards_df)} project cards from {project_cards_file}")
 
     # Load existing matches if any
-    matches_file = os.path.join(data_dir, 'matches.json')
+    student_work_dir = os.path.join(base_dir, 'session')
+    matches_file = os.path.join(student_work_dir, 'matches.json')
     if os.path.exists(matches_file):
         with open(matches_file, 'r') as f:
             global matches
@@ -86,7 +87,7 @@ def load_data():
             matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
 
     # Load existing notes if any
-    notes_file = os.path.join(data_dir, 'notes.json')
+    notes_file = os.path.join(student_work_dir, 'notes.json')
     if os.path.exists(notes_file):
         with open(notes_file, 'r') as f:
             global notes

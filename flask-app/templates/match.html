@@ -6,7 +6,7 @@
 
 <div class="match-container">
     {% for annotation in annotations %}
-    <div class="annotation-row" data-row-id="{{ annotation.row_id }}">
+    <div class="annotation-row" data-row-id="{{ annotation.row_id }}" id="row-{{ annotation.row_id }}">
         <div class="row-header">
             <span class="row-number">Row {{ loop.index }}/{{ total_rows }}</span>
             <span class="annot-reference">(Annotation #{{ annotation.annot_id }})</span>
@@ -155,6 +155,7 @@ function selectCandidate(rowId, candidateId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
+            window.location.hash = 'row-' + rowId;
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -174,6 +175,7 @@ function markNoMatch(rowId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
+            window.location.hash = 'row-' + rowId;
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -215,5 +217,46 @@ function skipToNext() {
     // Navigate to next PAD# in the list
     window.location.href = '/api/{{ api_name|urlencode }}';
 }
+
+// Scroll to the row that was just updated after page reload
+window.addEventListener('load', function() {
+    if (window.location.hash) {
+        const element = document.querySelector(window.location.hash);
+        if (element) {
+            // Scroll to the element
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Highlight the row briefly to show it was updated
+            element.style.transition = 'background-color 0.3s ease';
+            element.style.backgroundColor = '#fffacd';
+
+            // Remove highlight after 2 seconds
+            setTimeout(() => {
+                element.style.backgroundColor = '';
+            }, 2000);
+        }
+    }
+
+    // Scroll candidates container to show selected candidate for each row
+    document.querySelectorAll('.annotation-row').forEach(function(row) {
+        const selectedCandidate = row.querySelector('.candidate-card.selected');
+        if (selectedCandidate) {
+            const candidatesContainer = row.querySelector('.candidates-scroll');
+            if (candidatesContainer) {
+                // Scroll the container to show the selected candidate
+                const containerTop = candidatesContainer.scrollTop;
+                const containerHeight = candidatesContainer.clientHeight;
+                const candidateTop = selectedCandidate.offsetTop - candidatesContainer.offsetTop;
+                const candidateHeight = selectedCandidate.clientHeight;
+
+                // Check if candidate is not fully visible
+                if (candidateTop < containerTop || candidateTop + candidateHeight > containerTop + containerHeight) {
+                    // Scroll to center the selected candidate
+                    candidatesContainer.scrollTop = candidateTop - (containerHeight / 2) + (candidateHeight / 2);
+                }
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

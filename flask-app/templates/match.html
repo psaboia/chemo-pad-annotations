@@ -132,8 +132,13 @@
 </div>
 
 <div class="page-actions">
+    {% if prev_pad %}
+    <button class="skip-btn" onclick="skipToPrevious()">← Previous PAD#</button>
+    {% endif %}
     <button class="export-btn" onclick="exportPad()">Export This PAD#</button>
-    <button class="skip-btn" onclick="skipToNext()">Skip to Next PAD# →</button>
+    {% if next_pad %}
+    <button class="skip-btn" onclick="skipToNext()">Next PAD# →</button>
+    {% endif %}
 </div>
 
 <script>
@@ -227,6 +232,13 @@ function skipToNext() {
     {% else %}
     // No more PADs, go back to list
     window.location.href = '/api/{{ api_name|urlencode }}';
+    {% endif %}
+}
+
+function skipToPrevious() {
+    {% if prev_pad %}
+    // Navigate to previous PAD# in sequence
+    window.location.href = '/match/{{ api_name|urlencode }}/{{ prev_pad }}';
     {% endif %}
 }
 

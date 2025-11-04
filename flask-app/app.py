@@ -277,16 +277,19 @@ def match_page(api_name, pad_num):
     # Calculate progress - count both matched candidates and no_match rows
     matched_count = sum(1 for r in rows_data if r['matched_id'] or r['is_no_match'])
 
-    # Get list of all PAD#s for this API to find next one
+    # Get list of all PAD#s for this API to find next/previous ones
     api_data = annotations_df[annotations_df['API'] == api_name]
     all_pads = sorted(api_data['PAD#'].unique())
 
-    # Find next PAD# in sequence
+    # Find next and previous PAD#s in sequence
     next_pad = None
+    prev_pad = None
     try:
         current_idx = all_pads.index(pad_num)
         if current_idx < len(all_pads) - 1:
             next_pad = int(all_pads[current_idx + 1])
+        if current_idx > 0:
+            prev_pad = int(all_pads[current_idx - 1])
     except (ValueError, IndexError):
         pass
 
@@ -297,7 +300,8 @@ def match_page(api_name, pad_num):
                          candidates=candidates_data,
                          matched_count=matched_count,
                          total_rows=len(rows_data),
-                         next_pad=next_pad)
+                         next_pad=next_pad,
+                         prev_pad=prev_pad)
 
 @app.route('/api/save_match', methods=['POST'])
 @login_required

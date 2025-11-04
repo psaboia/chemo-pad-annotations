@@ -184,8 +184,8 @@ def pad_list(api_name):
         with open(matches_file, 'r') as f:
             global matches
             matches = json.load(f)
-            # Convert keys to int
-            matches = {int(k): v for k, v in matches.items()}
+            # Convert keys to int, handle "no_match" special value
+            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
 
     api_data = annotations_df[annotations_df['API'] == api_name]
 
@@ -233,8 +233,8 @@ def match_page(api_name, pad_num):
         with open(matches_file, 'r') as f:
             global matches
             matches = json.load(f)
-            # Convert keys to int
-            matches = {int(k): v for k, v in matches.items()}
+            # Convert keys to int, handle "no_match" special value
+            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
 
     # Reload notes from file to get latest data
     notes_file = os.path.join(base_dir, 'session', 'notes.json')

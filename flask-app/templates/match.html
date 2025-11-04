@@ -221,8 +221,13 @@ function exportPad() {
 }
 
 function skipToNext() {
-    // Navigate to next PAD# in the list
+    {% if next_pad %}
+    // Navigate to next PAD# in sequence
+    window.location.href = '/match/{{ api_name|urlencode }}/{{ next_pad }}';
+    {% else %}
+    // No more PADs, go back to list
     window.location.href = '/api/{{ api_name|urlencode }}';
+    {% endif %}
 }
 
 // Highlight the row that was just updated after page reload

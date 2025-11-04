@@ -277,13 +277,27 @@ def match_page(api_name, pad_num):
     # Calculate progress - count both matched candidates and no_match rows
     matched_count = sum(1 for r in rows_data if r['matched_id'] or r['is_no_match'])
 
+    # Get list of all PAD#s for this API to find next one
+    api_data = annotations_df[annotations_df['API'] == api_name]
+    all_pads = sorted(api_data['PAD#'].unique())
+
+    # Find next PAD# in sequence
+    next_pad = None
+    try:
+        current_idx = all_pads.index(pad_num)
+        if current_idx < len(all_pads) - 1:
+            next_pad = int(all_pads[current_idx + 1])
+    except (ValueError, IndexError):
+        pass
+
     return render_template('match.html',
                          api_name=api_name,
                          pad_num=pad_num,
                          annotations=rows_data,
                          candidates=candidates_data,
                          matched_count=matched_count,
-                         total_rows=len(rows_data))
+                         total_rows=len(rows_data),
+                         next_pad=next_pad)
 
 @app.route('/api/save_match', methods=['POST'])
 @login_required

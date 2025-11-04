@@ -289,6 +289,18 @@ def match_page(api_name, pad_num):
 @login_required
 def save_match():
     """Save a match between annotation row and project card"""
+    # Reload matches from file first to avoid overwriting in multi-worker environment
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    student_work_dir = os.path.join(base_dir, 'session')
+    matches_file = os.path.join(student_work_dir, 'matches.json')
+
+    global matches
+    if os.path.exists(matches_file):
+        with open(matches_file, 'r') as f:
+            matches = json.load(f)
+            # Convert keys to int, handle "no_match" special value
+            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
+
     data = request.json
     row_id = int(data['row_id'])
     card_id = data.get('card_id')
@@ -308,15 +320,11 @@ def save_match():
         # Unmatching
         del matches[row_id]
 
-    # Save matches to file using absolute path
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    student_work_dir = os.path.join(base_dir, 'session')
-
+    # Save matches to file
     # Create session directory if it doesn't exist
     if not os.path.exists(student_work_dir):
         os.makedirs(student_work_dir)
 
-    matches_file = os.path.join(student_work_dir, 'matches.json')
     with open(matches_file, 'w') as f:
         json.dump(matches, f, indent=2)
 
@@ -326,6 +334,18 @@ def save_match():
 @login_required
 def save_note():
     """Save notes for an annotation row"""
+    # Reload notes from file first to avoid overwriting in multi-worker environment
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    student_work_dir = os.path.join(base_dir, 'session')
+    notes_file = os.path.join(student_work_dir, 'notes.json')
+
+    global notes
+    if os.path.exists(notes_file):
+        with open(notes_file, 'r') as f:
+            notes = json.load(f)
+            # Convert keys to int
+            notes = {int(k): v for k, v in notes.items()}
+
     data = request.json
     row_id = int(data['row_id'])
     note_text = data.get('note', '')
@@ -336,15 +356,11 @@ def save_note():
         # Delete note if empty
         del notes[row_id]
 
-    # Save notes to file using absolute path
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    student_work_dir = os.path.join(base_dir, 'session')
-
+    # Save notes to file
     # Create session directory if it doesn't exist
     if not os.path.exists(student_work_dir):
         os.makedirs(student_work_dir)
 
-    notes_file = os.path.join(student_work_dir, 'notes.json')
     with open(notes_file, 'w') as f:
         json.dump(notes, f, indent=2)
 

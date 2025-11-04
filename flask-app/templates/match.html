@@ -155,7 +155,7 @@ function selectCandidate(rowId, candidateId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            window.location.hash = 'row-' + rowId;
+            sessionStorage.setItem('updatedRow', 'row-' + rowId);
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -175,7 +175,7 @@ function markNoMatch(rowId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            window.location.hash = 'row-' + rowId;
+            sessionStorage.setItem('updatedRow', 'row-' + rowId);
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -220,8 +220,12 @@ function skipToNext() {
 
 // Highlight the row that was just updated after page reload
 window.addEventListener('load', function() {
-    if (window.location.hash) {
-        const element = document.querySelector(window.location.hash);
+    const updatedRowId = sessionStorage.getItem('updatedRow');
+    if (updatedRowId) {
+        // Clear the storage immediately
+        sessionStorage.removeItem('updatedRow');
+
+        const element = document.querySelector('#' + updatedRowId);
         if (element) {
             // Highlight the row briefly to show it was updated (no scrolling)
             element.style.transition = 'background-color 0.3s ease';

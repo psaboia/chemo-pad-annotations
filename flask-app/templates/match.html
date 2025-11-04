@@ -54,7 +54,8 @@
                 <div class="action-buttons">
                     <button class="edit-btn" onclick="editAnnotation({{ annotation.row_id }})">Edit Fields</button>
                     <button class="no-match-btn {% if annotation.is_no_match %}active{% endif %}"
-                            onclick="markNoMatch({{ annotation.row_id }})">
+                            onclick="markNoMatch({{ annotation.row_id }}, {{ 'true' if annotation.is_no_match else 'false' }})"
+                            data-is-no-match="{{ 'true' if annotation.is_no_match else 'false' }}">
                         {% if annotation.is_no_match %}✓ No Match{% else %}Mark as No Match{% endif %}
                     </button>
                 </div>
@@ -163,14 +164,23 @@ function selectCandidate(rowId, candidateId) {
     });
 }
 
-function markNoMatch(rowId) {
+function markNoMatch(rowId, isCurrentlyNoMatch) {
+    // Toggle: if already marked as no match, unmatch it; otherwise mark it
+    const requestBody = {
+        row_id: rowId
+    };
+
+    if (!isCurrentlyNoMatch) {
+        // Mark as no match
+        requestBody.is_no_match = true;
+    }
+    // If isCurrentlyNoMatch is true, we send neither card_id nor is_no_match
+    // which triggers the unmatch logic in the backend
+
     fetch('/api/save_match', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            row_id: rowId,
-            is_no_match: true
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(res => res.json())
     .then(data => {

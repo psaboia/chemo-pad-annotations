@@ -132,6 +132,7 @@
 </div>
 
 <div class="page-actions">
+    <button class="skip-btn" onclick="backToList()">← Back to {{ api_name }}</button>
     {% if prev_pad %}
     <button class="skip-btn" onclick="skipToPrevious()">← Previous PAD#</button>
     {% endif %}
@@ -240,6 +241,11 @@ function skipToPrevious() {
     // Navigate to previous PAD# in sequence
     window.location.href = '/match/{{ api_name|urlencode }}/{{ prev_pad }}';
     {% endif %}
+}
+
+function backToList() {
+    // Navigate back to PAD list for this API/drug
+    window.location.href = '/api/{{ api_name|urlencode }}';
 }
 
 // Highlight the row that was just updated after page reload

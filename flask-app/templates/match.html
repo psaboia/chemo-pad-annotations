@@ -84,6 +84,8 @@
                             {% if candidate.processed_file_location %}
                             <img src="https://pad.crc.nd.edu{{ candidate.processed_file_location }}"
                                  alt="PAD Image {{ candidate.id }}"
+                                 onclick="openImageModal(this.src)"
+                                 style="cursor: pointer;"
                                  onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjEwMCIgeT0iMTAwIiBmaWxsPSIjOTk5Ij5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='">
                             {% else %}
                             <div class="no-image">No Image</div>
@@ -148,6 +150,14 @@
     {% if next_pad %}
     <button class="skip-btn" onclick="skipToNext()">Next PAD# →</button>
     {% endif %}
+</div>
+
+<!-- Image Expansion Modal -->
+<div id="imageModal" class="image-modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="modalImage" src="" alt="Expanded image">
+    </div>
 </div>
 
 <script>
@@ -291,6 +301,34 @@ window.addEventListener('load', function() {
             }
         }
     });
+});
+
+// Image Modal Functions
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageSrc;
+    modal.style.display = 'block';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+}
+
+// Close modal when clicking outside the image
+window.onclick = function(event) {
+    const modal = document.getElementById('imageModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal when pressing Escape
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+    }
 });
 </script>
 {% endblock %}

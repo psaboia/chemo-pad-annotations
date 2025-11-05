@@ -251,6 +251,16 @@ header h1, header h2 {
     font-weight: 600;
 }
 
+.candidates-badge {
+    background: #e8f4f8;
+    color: #0c5460;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-weight: 500;
+    display: inline-block;
+}
+
 .action-btn {
     background: #007bff;
     color: white;

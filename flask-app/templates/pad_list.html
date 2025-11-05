@@ -21,6 +21,7 @@
                 <th>PAD#</th>
                 <th>Sample</th>
                 <th>Rows</th>
+                <th>Candidates</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
@@ -31,6 +32,14 @@
                 <td>{{ pad.pad_num }}</td>
                 <td>{{ pad.sample }}</td>
                 <td>{{ pad.matched_rows }}/{{ pad.total_rows }}</td>
+                <td>
+                    <span class="candidates-badge">
+                        {{ pad.candidates_selected }} assigned / {{ pad.candidates_available }} available
+                        {% if pad.candidates_deleted > 0 %}
+                        ({{ pad.candidates_deleted }} deleted)
+                        {% endif %}
+                    </span>
+                </td>
                 <td>
                     {% if pad.status == 'complete' %}
                         <span class="status-complete">✅ Complete</span>

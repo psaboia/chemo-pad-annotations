@@ -183,11 +183,27 @@ def pad_list(api_name):
         # Get sample name from first row
         sample = pad_rows.iloc[0]['Sample'] if pd.notna(pad_rows.iloc[0]['Sample']) else ''
 
+        # Get candidates info for this PAD
+        pad_candidates = project_cards_df[project_cards_df['sample_id'] == pad]
+        total_candidates = len(pad_candidates)
+
+        # Count selected candidates and deleted candidates
+        selected_candidates = 0
+        deleted_candidates = 0
+        for idx, candidate in pad_candidates.iterrows():
+            if candidate['id'] in matches.values():
+                selected_candidates += 1
+            if candidate['deleted']:
+                deleted_candidates += 1
+
         pad_stats.append({
             'pad_num': int(pad),
             'sample': sample,
             'total_rows': len(pad_rows),
             'matched_rows': matched_count,
+            'candidates_selected': selected_candidates,
+            'candidates_available': total_candidates,
+            'candidates_deleted': deleted_candidates,
             'status': 'complete' if matched_count == len(pad_rows) else
                      'partial' if matched_count > 0 else 'not_started'
         })
@@ -328,6 +344,51 @@ def save_note():
     except Exception as e:
         logger.error(f"Error saving note: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/backup', methods=['POST'])
+@login_required
+def create_backup():
+    """Create a manual backup of the database"""
+    try:
+        filename, size = database.create_file_backup('manual')
+        backup_info = database.get_backup_info()
+
+        return jsonify({
+            'status': 'success',
+            'filename': filename,
+            'size': size,
+            'last_backup': backup_info.get('last_backup'),
+            'total_backups': len(backup_info.get('backups', []))
+        })
+    except Exception as e:
+        logger.error(f"Error creating backup: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/backup/info')
+@login_required
+def backup_info():
+    """Get information about existing backups"""
+    try:
+        info = database.get_backup_info()
+
+        # Format the response for the frontend
+        if info['last_backup_age']:
+            minutes_ago = int(info['last_backup_age'] / 60)
+            if minutes_ago < 60:
+                info['last_backup_text'] = f"{minutes_ago} minutes ago"
+            elif minutes_ago < 1440:
+                hours_ago = minutes_ago // 60
+                info['last_backup_text'] = f"{hours_ago} hour{'s' if hours_ago > 1 else ''} ago"
+            else:
+                days_ago = minutes_ago // 1440
+                info['last_backup_text'] = f"{days_ago} day{'s' if days_ago > 1 else ''} ago"
+        else:
+            info['last_backup_text'] = "Never"
+
+        return jsonify(info)
+    except Exception as e:
+        logger.error(f"Error getting backup info: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/export')
 @login_required

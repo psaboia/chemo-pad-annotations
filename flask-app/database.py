@@ -217,6 +217,100 @@ def backup_database():
 
     logger.info("Database backup created")
 
+def create_file_backup(backup_type='manual'):
+    """Create a physical file backup of the database"""
+    import shutil
+
+    # Create backup directory if it doesn't exist
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    backup_dir = os.path.join(base_dir, 'database', 'backups')
+
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+
+    # Generate filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_filename = f"{backup_type}_{timestamp}.db"
+    backup_path = os.path.join(backup_dir, backup_filename)
+
+    # Copy the database file
+    source_db = get_db_path()
+    shutil.copy2(source_db, backup_path)
+
+    # Clean up old backups based on type
+    cleanup_old_backups(backup_dir, backup_type)
+
+    logger.info(f"File backup created: {backup_filename}")
+    return backup_filename, os.path.getsize(backup_path)
+
+def cleanup_old_backups(backup_dir, backup_type):
+    """Remove old backups keeping only recent ones based on type"""
+    # Define retention policies
+    retention_policies = {
+        'manual': 5,     # Keep last 5 manual backups
+        'auto': 1,       # Keep only 1 auto backup (rolling)
+        'export': 3,     # Keep last 3 export backups
+        'daily': 7,      # Keep last 7 daily backups
+    }
+
+    max_files = retention_policies.get(backup_type, 10)
+
+    # Get all backup files of this type
+    pattern = f"{backup_type}_*.db"
+    backups = []
+    for filename in os.listdir(backup_dir):
+        if filename.startswith(f"{backup_type}_") and filename.endswith('.db'):
+            filepath = os.path.join(backup_dir, filename)
+            backups.append((filepath, os.path.getmtime(filepath)))
+
+    # Sort by modification time (newest first)
+    backups.sort(key=lambda x: x[1], reverse=True)
+
+    # Remove old backups
+    for filepath, _ in backups[max_files:]:
+        os.remove(filepath)
+        logger.info(f"Removed old backup: {os.path.basename(filepath)}")
+
+def get_backup_info():
+    """Get information about existing backups"""
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    backup_dir = os.path.join(base_dir, 'database', 'backups')
+
+    if not os.path.exists(backup_dir):
+        return {'backups': [], 'total_size': 0, 'last_backup': None}
+
+    backups = []
+    total_size = 0
+    last_backup = None
+
+    for filename in os.listdir(backup_dir):
+        if filename.endswith('.db'):
+            filepath = os.path.join(backup_dir, filename)
+            file_stats = os.stat(filepath)
+            backup_time = datetime.fromtimestamp(file_stats.st_mtime)
+
+            backups.append({
+                'filename': filename,
+                'size': file_stats.st_size,
+                'created': backup_time.isoformat(),
+                'age': (datetime.now() - backup_time).total_seconds()
+            })
+
+            total_size += file_stats.st_size
+
+            if last_backup is None or backup_time > last_backup:
+                last_backup = backup_time
+
+    # Sort by creation time (newest first)
+    backups.sort(key=lambda x: x['created'], reverse=True)
+
+    return {
+        'backups': backups[:10],  # Return only last 10
+        'total_size': total_size,
+        'last_backup': last_backup.isoformat() if last_backup else None,
+        'last_backup_age': (datetime.now() - last_backup).total_seconds() if last_backup else None
+    }
+
 def get_stats():
     """Get database statistics"""
     with get_db() as conn:

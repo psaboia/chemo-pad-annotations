@@ -22,6 +22,7 @@
                 <th>Sample</th>
                 <th>Rows</th>
                 <th>Candidates</th>
+                <th>Notes</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
@@ -40,6 +41,7 @@
                         {% endif %}
                     </span>
                 </td>
+                <td>💬 {{ pad.notes_count }}</td>
                 <td>
                     {% if pad.status == 'complete' %}
                         <span class="status-complete">✅ Complete</span>

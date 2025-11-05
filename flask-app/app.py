@@ -169,9 +169,10 @@ def dashboard():
 @login_required
 def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
-    # Reload matches from database to get latest data
-    global matches
+    # Reload matches and notes from database to get latest data
+    global matches, notes
     matches = database.get_all_matches()
+    notes = database.get_all_notes()
 
     api_data = annotations_df[annotations_df['API'] == api_name]
 
@@ -179,6 +180,9 @@ def pad_list(api_name):
     for pad in api_data['PAD#'].unique():
         pad_rows = api_data[api_data['PAD#'] == pad]
         matched_count = sum(1 for annot_id in pad_rows['annot_id'] if annot_id in matches)
+
+        # Count rows with notes
+        notes_count = sum(1 for annot_id in pad_rows['annot_id'] if annot_id in notes)
 
         # Get sample name from first row
         sample = pad_rows.iloc[0]['Sample'] if pd.notna(pad_rows.iloc[0]['Sample']) else ''
@@ -201,6 +205,7 @@ def pad_list(api_name):
             'sample': sample,
             'total_rows': len(pad_rows),
             'matched_rows': matched_count,
+            'notes_count': notes_count,
             'candidates_selected': selected_candidates,
             'candidates_available': total_candidates,
             'candidates_deleted': deleted_candidates,

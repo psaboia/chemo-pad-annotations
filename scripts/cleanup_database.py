@@ -7,8 +7,8 @@ Removes all test data and resets the database to production-ready state
 import os
 import sys
 
-# Add flask-app to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'flask-app'))
+# Add flask-app to path (script is in scripts/, so go up one level)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'flask-app'))
 
 import database
 
@@ -69,7 +69,8 @@ def cleanup_database():
 
 def cleanup_backup_files():
     """Clean up backup files"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(script_dir)  # Go up to project root
     backup_dir = os.path.join(base_dir, 'database', 'backups')
 
     if not os.path.exists(backup_dir):
@@ -96,7 +97,8 @@ def cleanup_backup_files():
 
 def cleanup_export_files():
     """Clean up export CSV files"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(script_dir)  # Go up to project root
     exports_dir = os.path.join(base_dir, 'exports')
 
     if not os.path.exists(exports_dir):

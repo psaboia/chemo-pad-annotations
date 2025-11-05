@@ -8,8 +8,8 @@ import os
 import sys
 import pandas as pd
 
-# Add flask-app to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'flask-app'))
+# Add flask-app to path (script is in scripts/, so go up one level)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'flask-app'))
 
 import database
 
@@ -19,8 +19,9 @@ def import_export_data(export_file):
     print("📥 Importing Data from Old Export")
     print("=" * 60)
 
-    # Get paths
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get paths (script is in scripts/, so project root is one level up)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(script_dir)  # Go up to project root
     data_dir = os.path.join(base_dir, 'data')
 
     # Handle both absolute/relative paths and filenames

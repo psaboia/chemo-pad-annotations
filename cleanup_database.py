@@ -37,7 +37,7 @@ def cleanup_database():
 
     response = input("\nAre you sure you want to continue? (yes/no): ").strip().lower()
 
-    if response != 'yes':
+    if response not in ['yes', 'y']:
         print("❌ Cleanup cancelled")
         return
 
@@ -85,7 +85,7 @@ def cleanup_backup_files():
     print(f"\n  Found {len(backup_files)} backup files")
     response = input("  Remove backup files? (yes/no): ").strip().lower()
 
-    if response == 'yes':
+    if response in ['yes', 'y']:
         for filename in backup_files:
             filepath = os.path.join(backup_dir, filename)
             os.remove(filepath)
@@ -112,7 +112,7 @@ def cleanup_export_files():
     print(f"\n  Found {len(export_files)} export files")
     response = input("  Remove export files? (yes/no): ").strip().lower()
 
-    if response == 'yes':
+    if response in ['yes', 'y']:
         for filename in export_files:
             filepath = os.path.join(exports_dir, filename)
             os.remove(filepath)

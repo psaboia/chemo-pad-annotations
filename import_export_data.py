@@ -194,7 +194,7 @@ def import_export_data(export_file):
 
     response = input("\nProceed with import? (yes/no): ").strip().lower()
 
-    if response != 'yes':
+    if response not in ['yes', 'y']:
         print("❌ Import cancelled")
         return
 

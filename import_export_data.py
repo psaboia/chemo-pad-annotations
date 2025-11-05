@@ -23,7 +23,14 @@ def import_export_data(export_file):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(base_dir, 'data')
 
-    export_path = os.path.join(data_dir, export_file)
+    # Handle both absolute/relative paths and filenames
+    if os.path.isabs(export_file) or os.path.exists(export_file):
+        # Full path provided or file exists in current directory
+        export_path = export_file
+    else:
+        # Just filename, look in data/ directory
+        export_path = os.path.join(data_dir, export_file)
+
     annotations_path = os.path.join(data_dir, 'chemoPAD-annotations-final.csv')
     project_cards_path = os.path.join(data_dir, 'project_cards.csv')
 

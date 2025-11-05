@@ -24,6 +24,10 @@
                 <h3>Annotation #{{ annotation.annot_id }}</h3>
                 <div class="field-group">
                     <div class="field">
+                        <label>Sample:</label>
+                        <span>{{ annotation.Sample or 'N/A' }}</span>
+                    </div>
+                    <div class="field">
                         <label>Camera:</label>
                         <span>{{ annotation.Camera or 'N/A' }}</span>
                     </div>
@@ -90,11 +94,15 @@
 
                         <div class="candidate-info">
                             <div class="info-row">
+                                <label>Sample ID:</label>
+                                <span>{{ candidate.sample_id or 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
                                 <label>Camera:</label>
                                 <span>{{ candidate.camera_type_1 or 'N/A' }}</span>
                             </div>
                             <div class="info-row">
-                                <label>Sample:</label>
+                                <label>API/Drug:</label>
                                 <span>{{ candidate.sample_name or 'N/A' }}</span>
                             </div>
                             <div class="info-row">
@@ -105,12 +113,10 @@
                                 <label>Date:</label>
                                 <span>{{ candidate.date_of_creation[:10] if candidate.date_of_creation else 'N/A' }}</span>
                             </div>
-                            {% if candidate.deleted %}
-                            <div class="info-row deleted">
+                            <div class="info-row {% if candidate.deleted %}deleted{% endif %}">
                                 <label>Status:</label>
-                                <span>Deleted</span>
+                                <span>{% if candidate.deleted %}Deleted{% else %}Active{% endif %}</span>
                             </div>
-                            {% endif %}
                         </div>
 
                         {% if not candidate.is_used or annotation.matched_id == candidate.id %}

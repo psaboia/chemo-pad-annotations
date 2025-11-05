@@ -73,7 +73,6 @@
                     <div class="candidate-card {% if candidate.is_used %}used{% endif %} {% if annotation.matched_id == candidate.id %}selected{% endif %}"
                          data-candidate-id="{{ candidate.id }}">
                         <div class="candidate-header">
-                            <strong>ID: {{ candidate.id }}</strong>
                             {% if candidate.is_used and annotation.matched_id != candidate.id %}
                             <span class="used-badge">Used</span>
                             {% elif annotation.matched_id == candidate.id %}

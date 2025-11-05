@@ -42,8 +42,6 @@ def init_db():
             CREATE TABLE IF NOT EXISTS matches (
                 annot_id INTEGER PRIMARY KEY,
                 card_id TEXT NOT NULL,
-                api_name TEXT,
-                pad_num INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -54,16 +52,10 @@ def init_db():
             CREATE TABLE IF NOT EXISTS notes (
                 annot_id INTEGER PRIMARY KEY,
                 note_text TEXT NOT NULL,
-                api_name TEXT,
-                pad_num INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-
-        # Create indexes for better performance
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_matches_api_pad ON matches(api_name, pad_num)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_notes_api_pad ON notes(api_name, pad_num)')
 
         # Create backup table for recovery
         conn.execute('''
@@ -78,7 +70,7 @@ def init_db():
         conn.commit()
         logger.info("Database initialized successfully")
 
-def save_match(annot_id, card_id, api_name=None, pad_num=None):
+def save_match(annot_id, card_id):
     """Save a match to the database"""
     with get_db() as conn:
         if card_id is None:
@@ -87,14 +79,14 @@ def save_match(annot_id, card_id, api_name=None, pad_num=None):
         else:
             # Insert or update the match
             conn.execute('''
-                INSERT OR REPLACE INTO matches (annot_id, card_id, api_name, pad_num, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (annot_id, str(card_id), api_name, pad_num))
+                INSERT OR REPLACE INTO matches (annot_id, card_id, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            ''', (annot_id, str(card_id)))
 
         conn.commit()
         logger.info(f"Saved match: annot_id={annot_id}, card_id={card_id}")
 
-def save_note(annot_id, note_text, api_name=None, pad_num=None):
+def save_note(annot_id, note_text):
     """Save a note to the database"""
     with get_db() as conn:
         if not note_text:
@@ -103,9 +95,9 @@ def save_note(annot_id, note_text, api_name=None, pad_num=None):
         else:
             # Insert or update the note
             conn.execute('''
-                INSERT OR REPLACE INTO notes (annot_id, note_text, api_name, pad_num, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (annot_id, note_text, api_name, pad_num))
+                INSERT OR REPLACE INTO notes (annot_id, note_text, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            ''', (annot_id, note_text))
 
         conn.commit()
         logger.info(f"Saved note: annot_id={annot_id}")

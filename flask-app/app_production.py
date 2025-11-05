@@ -285,11 +285,6 @@ def save_match():
     card_id = data.get('card_id')
     is_no_match = data.get('is_no_match', False)
 
-    # Get api_name and pad_num from the annotation
-    annotation_row = annotations_df[annotations_df['annot_id'] == annot_id]
-    api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
-    pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
-
     try:
         if card_id and card_id != "no_match":
             card_id = int(card_id)
@@ -297,13 +292,13 @@ def save_match():
             current_matches = database.get_all_matches()
             if card_id in current_matches.values():
                 return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
-            database.save_match(annot_id, card_id, api_name, pad_num)
+            database.save_match(annot_id, card_id)
         elif is_no_match:
             # Mark as no match
-            database.save_match(annot_id, "no_match", api_name, pad_num)
+            database.save_match(annot_id, "no_match")
         else:
             # Unmatching - delete the entry
-            database.save_match(annot_id, None, api_name, pad_num)
+            database.save_match(annot_id, None)
 
         # Reload matches for in-memory cache
         global matches
@@ -322,13 +317,8 @@ def save_note():
     annot_id = int(data['annot_id'])  # Changed from row_id to annot_id
     note_text = data.get('note', '')
 
-    # Get api_name and pad_num from the annotation
-    annotation_row = annotations_df[annotations_df['annot_id'] == annot_id]
-    api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
-    pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
-
     try:
-        database.save_note(annot_id, note_text, api_name, pad_num)
+        database.save_note(annot_id, note_text)
 
         # Reload notes for in-memory cache
         global notes

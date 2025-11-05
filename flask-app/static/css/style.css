@@ -447,14 +447,14 @@ header h1, header h2 {
 
 .candidate-image img {
     width: 100%;
-    max-width: 280px;
+    max-width: 200px;
     height: auto;
     border-radius: 4px;
 }
 
 .no-image {
-    width: 280px;
-    height: 210px;
+    width: 200px;
+    height: 150px;
     background: #ddd;
     display: flex;
     align-items: center;

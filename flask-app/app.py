@@ -165,7 +165,7 @@ def dashboard():
 
     return render_template('dashboard.html', apis=api_stats)
 
-@app.route('/api/<api_name>')
+@app.route('/api/<path:api_name>')
 @login_required
 def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
@@ -229,7 +229,7 @@ def pad_list(api_name):
                          pads=pad_stats,
                          api_progress=api_progress)
 
-@app.route('/match/<api_name>/<int:pad_num>')
+@app.route('/match/<path:api_name>/<int:pad_num>')
 @login_required
 def match_page(api_name, pad_num):
     """Annotation Matching page - Level 3"""

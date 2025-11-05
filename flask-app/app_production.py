@@ -7,6 +7,7 @@ import logging
 from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 import markdown
+import database  # Import our new database module
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'chemopad-secret-key-2024')
@@ -76,24 +77,15 @@ def load_data():
     logger.info(f"Loaded {len(annotations_df)} annotations from {annotations_file}")
     logger.info(f"Loaded {len(project_cards_df)} project cards from {project_cards_file}")
 
-    # Load existing matches if any
-    student_work_dir = os.path.join(base_dir, 'session')
-    matches_file = os.path.join(student_work_dir, 'matches.json')
-    if os.path.exists(matches_file):
-        with open(matches_file, 'r') as f:
-            global matches
-            matches = json.load(f)
-            # Convert keys to int, handle "no_match" special value
-            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
+    # Load existing matches from database
+    global matches
+    matches = database.get_all_matches()
 
-    # Load existing notes if any
-    notes_file = os.path.join(student_work_dir, 'notes.json')
-    if os.path.exists(notes_file):
-        with open(notes_file, 'r') as f:
-            global notes
-            notes = json.load(f)
-            # Convert keys to int
-            notes = {int(k): v for k, v in notes.items()}
+    # Load existing notes from database
+    global notes
+    notes = database.get_all_notes()
+
+    logger.info(f"Loaded {len(matches)} matches and {len(notes)} notes from database")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -177,15 +169,9 @@ def dashboard():
 @login_required
 def pad_list(api_name):
     """PAD# List for specific API - Level 2"""
-    # Reload matches from file to get latest data
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    matches_file = os.path.join(base_dir, 'session', 'matches.json')
-    if os.path.exists(matches_file):
-        with open(matches_file, 'r') as f:
-            global matches
-            matches = json.load(f)
-            # Convert keys to int, handle "no_match" special value
-            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
+    # Reload matches from database to get latest data
+    global matches
+    matches = database.get_all_matches()
 
     api_data = annotations_df[annotations_df['API'] == api_name]
 
@@ -226,24 +212,10 @@ def pad_list(api_name):
 @login_required
 def match_page(api_name, pad_num):
     """Annotation Matching page - Level 3"""
-    # Reload matches from file to get latest data
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    matches_file = os.path.join(base_dir, 'session', 'matches.json')
-    if os.path.exists(matches_file):
-        with open(matches_file, 'r') as f:
-            global matches
-            matches = json.load(f)
-            # Convert keys to int, handle "no_match" special value
-            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
-
-    # Reload notes from file to get latest data
-    notes_file = os.path.join(base_dir, 'session', 'notes.json')
-    if os.path.exists(notes_file):
-        with open(notes_file, 'r') as f:
-            global notes
-            notes = json.load(f)
-            # Convert keys to int
-            notes = {int(k): v for k, v in notes.items()}
+    # Reload matches and notes from database to get latest data
+    global matches, notes
+    matches = database.get_all_matches()
+    notes = database.get_all_notes()
 
     # Get all annotation rows for this PAD#
     pad_annotations = annotations_df[
@@ -307,106 +279,78 @@ def match_page(api_name, pad_num):
 @login_required
 def save_match():
     """Save a match between annotation row and project card"""
-    # Reload matches from file first to avoid overwriting in multi-worker environment
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    student_work_dir = os.path.join(base_dir, 'session')
-    matches_file = os.path.join(student_work_dir, 'matches.json')
-
-    global matches
-    if os.path.exists(matches_file):
-        with open(matches_file, 'r') as f:
-            matches = json.load(f)
-            # Convert keys to int, handle "no_match" special value
-            matches = {int(k): (v if v == "no_match" else v) for k, v in matches.items()}
-
     data = request.json
     row_id = int(data['row_id'])
     card_id = data.get('card_id')
     is_no_match = data.get('is_no_match', False)
 
-    # Convert card_id to int if it's not None/empty and not a special value
-    if card_id and card_id != "no_match":
-        card_id = int(card_id)
-        # Check if card_id is already used by another annotation
-        if card_id in matches.values():
-            return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
-        matches[row_id] = card_id
-    elif is_no_match:
-        # Mark as no match
-        matches[row_id] = "no_match"
-    elif row_id in matches:
-        # Unmatching
-        del matches[row_id]
+    # Get api_name and pad_num from the annotation
+    annotation_row = annotations_df[annotations_df['row_id'] == row_id]
+    api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
+    pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
 
-    # Save matches to file
-    # Create session directory if it doesn't exist
-    if not os.path.exists(student_work_dir):
-        os.makedirs(student_work_dir)
+    try:
+        if card_id and card_id != "no_match":
+            card_id = int(card_id)
+            # Check if card_id is already used
+            current_matches = database.get_all_matches()
+            if card_id in current_matches.values():
+                return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
+            database.save_match(row_id, card_id, api_name, pad_num)
+        elif is_no_match:
+            # Mark as no match
+            database.save_match(row_id, "no_match", api_name, pad_num)
+        else:
+            # Unmatching - delete the entry
+            database.save_match(row_id, None, api_name, pad_num)
 
-    with open(matches_file, 'w') as f:
-        json.dump(matches, f, indent=2)
+        # Reload matches for in-memory cache
+        global matches
+        matches = database.get_all_matches()
 
-    return jsonify({'success': True})
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error saving match: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/save_note', methods=['POST'])
 @login_required
 def save_note():
     """Save notes for an annotation row"""
-    # Reload notes from file first to avoid overwriting in multi-worker environment
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    notes_file = os.path.join(base_dir, 'session', 'notes.json')
-
-    global notes
-    if os.path.exists(notes_file):
-        with open(notes_file, 'r') as f:
-            notes = json.load(f)
-            # Convert keys to int
-            notes = {int(k): v for k, v in notes.items()}
-
     data = request.json
     row_id = int(data['row_id'])
     note_text = data.get('note', '')
 
-    if note_text:
-        notes[row_id] = note_text
-    elif row_id in notes:
-        # Delete note if empty
-        del notes[row_id]
+    # Get api_name and pad_num from the annotation
+    annotation_row = annotations_df[annotations_df['row_id'] == row_id]
+    api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
+    pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
 
-    # Save notes to file
-    with open(notes_file, 'w') as f:
-        json.dump(notes, f, indent=2)
+    try:
+        database.save_note(row_id, note_text, api_name, pad_num)
 
-    return jsonify({'success': True})
+        # Reload notes for in-memory cache
+        global notes
+        notes = database.get_all_notes()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error saving note: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/export')
 @login_required
 def export_data():
     """Export all matched data to CSV"""
-    # Reload notes and matches from files to get latest data
+    # Reload notes and matches from database to get latest data
+    global matches, notes
+    matches = database.get_all_matches()
+    notes = database.get_all_notes()
+
+    # Create a database backup before export
+    database.backup_database()
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    # Reload matches
-    student_work_dir = os.path.join(base_dir, 'session')
-
-    # Create session directory if it doesn't exist
-    if not os.path.exists(student_work_dir):
-        os.makedirs(student_work_dir)
-
-    matches_file = os.path.join(base_dir, 'session', 'matches.json')
-    global matches
-    if os.path.exists(matches_file):
-        with open(matches_file, 'r') as f:
-            matches = json.load(f)
-            matches = {int(k): v for k, v in matches.items()}
-
-    # Reload notes
-    notes_file = os.path.join(base_dir, 'session', 'notes.json')
-    global notes
-    if os.path.exists(notes_file):
-        with open(notes_file, 'r') as f:
-            notes = json.load(f)
-            notes = {int(k): v for k, v in notes.items()}
 
     # Load ALL annotations including those with missing_card=True
     annotations_file = os.path.join(base_dir, 'data', 'chemoPAD-student-annotations-with-flags.csv')

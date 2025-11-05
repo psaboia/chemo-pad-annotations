@@ -6,7 +6,7 @@
 
 <div class="match-container">
     {% for annotation in annotations %}
-    <div class="annotation-row" data-row-id="{{ annotation.row_id }}" id="row-{{ annotation.row_id }}">
+    <div class="annotation-row" data-annot-id="{{ annotation.annot_id }}" id="row-{{ annotation.annot_id }}">
         <div class="row-header">
             <span class="row-number">Row {{ loop.index }}/{{ total_rows }}</span>
             <span class="annot-reference">(Annotation #{{ annotation.annot_id }})</span>
@@ -46,17 +46,17 @@
                 </div>
 
                 <div class="notes-section">
-                    <label for="notes-{{ annotation.row_id }}">Notes:</label>
-                    <textarea id="notes-{{ annotation.row_id }}"
+                    <label for="notes-{{ annotation.annot_id }}">Notes:</label>
+                    <textarea id="notes-{{ annotation.annot_id }}"
                               class="notes-input"
-                              onchange="saveNote({{ annotation.row_id }}, this.value)"
+                              onchange="saveNote({{ annotation.annot_id }}, this.value)"
                               placeholder="Add observations about this annotation...">{{ annotation.notes }}</textarea>
                 </div>
 
                 <div class="action-buttons">
-                    <button class="edit-btn" onclick="editAnnotation({{ annotation.row_id }})">Edit Fields</button>
+                    <button class="edit-btn" onclick="editAnnotation({{ annotation.annot_id }})">Edit Fields</button>
                     <button class="no-match-btn {% if annotation.is_no_match %}active{% endif %}"
-                            onclick="markNoMatch({{ annotation.row_id }}, {{ 'true' if annotation.is_no_match else 'false' }})"
+                            onclick="markNoMatch({{ annotation.annot_id }}, {{ 'true' if annotation.is_no_match else 'false' }})"
                             data-is-no-match="{{ 'true' if annotation.is_no_match else 'false' }}">
                         {% if annotation.is_no_match %}✓ No Match{% else %}Mark as No Match{% endif %}
                     </button>
@@ -115,7 +115,7 @@
 
                         {% if not candidate.is_used or annotation.matched_id == candidate.id %}
                         <button class="select-btn"
-                                onclick="selectCandidate({{ annotation.row_id }}, {{ candidate.id }})"
+                                onclick="selectCandidate({{ annotation.annot_id }}, {{ candidate.id }})"
                                 {% if annotation.matched_id == candidate.id %}
                                 data-selected="true"
                                 {% endif %}>
@@ -143,7 +143,7 @@
 </div>
 
 <script>
-function selectCandidate(rowId, candidateId) {
+function selectCandidate(annotId, candidateId) {
     const btn = event.target;
     const isSelected = btn.dataset.selected === 'true';
 
@@ -156,14 +156,14 @@ function selectCandidate(rowId, candidateId) {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            row_id: rowId,
+            annot_id: annotId,
             card_id: candidateId
         })
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            sessionStorage.setItem('updatedRow', 'row-' + rowId);
+            sessionStorage.setItem('updatedRow', 'row-' + annotId);
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -171,10 +171,10 @@ function selectCandidate(rowId, candidateId) {
     });
 }
 
-function markNoMatch(rowId, isCurrentlyNoMatch) {
+function markNoMatch(annotId, isCurrentlyNoMatch) {
     // Toggle: if already marked as no match, unmatch it; otherwise mark it
     const requestBody = {
-        row_id: rowId
+        annot_id: annotId
     };
 
     if (!isCurrentlyNoMatch) {
@@ -192,7 +192,7 @@ function markNoMatch(rowId, isCurrentlyNoMatch) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            sessionStorage.setItem('updatedRow', 'row-' + rowId);
+            sessionStorage.setItem('updatedRow', 'row-' + annotId);
             window.location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -200,12 +200,12 @@ function markNoMatch(rowId, isCurrentlyNoMatch) {
     });
 }
 
-function saveNote(rowId, noteText) {
+function saveNote(annotId, noteText) {
     fetch('/api/save_note', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            row_id: rowId,
+            annot_id: annotId,
             note: noteText
         })
     })
@@ -217,7 +217,7 @@ function saveNote(rowId, noteText) {
     });
 }
 
-function editAnnotation(rowId) {
+function editAnnotation(annotId) {
     // TODO: Implement edit modal
     alert('Edit functionality coming soon!');
 }

@@ -37,10 +37,10 @@ def get_db():
 def init_db():
     """Initialize database tables"""
     with get_db() as conn:
-        # Create matches table
+        # Create matches table with annot_id as primary key
         conn.execute('''
             CREATE TABLE IF NOT EXISTS matches (
-                row_id INTEGER PRIMARY KEY,
+                annot_id INTEGER PRIMARY KEY,
                 card_id TEXT NOT NULL,
                 api_name TEXT,
                 pad_num INTEGER,
@@ -49,10 +49,10 @@ def init_db():
             )
         ''')
 
-        # Create notes table
+        # Create notes table with annot_id as primary key
         conn.execute('''
             CREATE TABLE IF NOT EXISTS notes (
-                row_id INTEGER PRIMARY KEY,
+                annot_id INTEGER PRIMARY KEY,
                 note_text TEXT NOT NULL,
                 api_name TEXT,
                 pad_num INTEGER,
@@ -78,43 +78,43 @@ def init_db():
         conn.commit()
         logger.info("Database initialized successfully")
 
-def save_match(row_id, card_id, api_name=None, pad_num=None):
+def save_match(annot_id, card_id, api_name=None, pad_num=None):
     """Save a match to the database"""
     with get_db() as conn:
         if card_id is None:
             # Delete the match
-            conn.execute('DELETE FROM matches WHERE row_id = ?', (row_id,))
+            conn.execute('DELETE FROM matches WHERE annot_id = ?', (annot_id,))
         else:
             # Insert or update the match
             conn.execute('''
-                INSERT OR REPLACE INTO matches (row_id, card_id, api_name, pad_num, updated_at)
+                INSERT OR REPLACE INTO matches (annot_id, card_id, api_name, pad_num, updated_at)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (row_id, str(card_id), api_name, pad_num))
+            ''', (annot_id, str(card_id), api_name, pad_num))
 
         conn.commit()
-        logger.info(f"Saved match: row_id={row_id}, card_id={card_id}")
+        logger.info(f"Saved match: annot_id={annot_id}, card_id={card_id}")
 
-def save_note(row_id, note_text, api_name=None, pad_num=None):
+def save_note(annot_id, note_text, api_name=None, pad_num=None):
     """Save a note to the database"""
     with get_db() as conn:
         if not note_text:
             # Delete the note if empty
-            conn.execute('DELETE FROM notes WHERE row_id = ?', (row_id,))
+            conn.execute('DELETE FROM notes WHERE annot_id = ?', (annot_id,))
         else:
             # Insert or update the note
             conn.execute('''
-                INSERT OR REPLACE INTO notes (row_id, note_text, api_name, pad_num, updated_at)
+                INSERT OR REPLACE INTO notes (annot_id, note_text, api_name, pad_num, updated_at)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (row_id, note_text, api_name, pad_num))
+            ''', (annot_id, note_text, api_name, pad_num))
 
         conn.commit()
-        logger.info(f"Saved note: row_id={row_id}")
+        logger.info(f"Saved note: annot_id={annot_id}")
 
 def get_all_matches():
     """Get all matches as a dictionary"""
     matches = {}
     with get_db() as conn:
-        cursor = conn.execute('SELECT row_id, card_id FROM matches')
+        cursor = conn.execute('SELECT annot_id, card_id FROM matches')
         for row in cursor:
             # Keep "no_match" as string, convert others to int if possible
             card_id = row['card_id']
@@ -123,7 +123,7 @@ def get_all_matches():
                     card_id = int(card_id)
                 except (ValueError, TypeError):
                     pass
-            matches[row['row_id']] = card_id
+            matches[row['annot_id']] = card_id
 
     return matches
 
@@ -131,9 +131,9 @@ def get_all_notes():
     """Get all notes as a dictionary"""
     notes = {}
     with get_db() as conn:
-        cursor = conn.execute('SELECT row_id, note_text FROM notes')
+        cursor = conn.execute('SELECT annot_id, note_text FROM notes')
         for row in cursor:
-            notes[row['row_id']] = row['note_text']
+            notes[row['annot_id']] = row['note_text']
 
     return notes
 

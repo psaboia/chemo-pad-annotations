@@ -53,8 +53,8 @@ def login_required(f):
 # Global data storage
 annotations_df = None
 project_cards_df = None
-matches = {}  # {annotation_row_id: project_card_id}
-notes = {}  # Store notes for each annotation  # {annotation_row_id: project_card_id}
+matches = {}  # {annotation_annot_id: project_card_id}
+notes = {}  # Store notes for each annotation  # {annotation_annot_id: project_card_id}
 
 def load_data():
     """Load all CSV data"""
@@ -65,10 +65,10 @@ def load_data():
     data_dir = os.path.join(base_dir, 'data')
 
     # Load annotations (skip missing cards)
-    annotations_file = os.path.join(data_dir, 'chemoPAD-student-annotations-with-flags.csv')
+    annotations_file = os.path.join(data_dir, 'chemoPAD-annotations-final.csv')
     annotations_df = pd.read_csv(annotations_file)
     annotations_df = annotations_df[annotations_df['missing_card'] != True].copy()
-    annotations_df['row_id'] = range(len(annotations_df))
+    # No need to create row_id, we'll use annot_id directly
 
     # Load project cards
     project_cards_file = os.path.join(data_dir, 'project_cards.csv')
@@ -150,7 +150,7 @@ def dashboard():
         completed_pads = 0
         for pad in unique_pads:
             pad_rows = api_data[api_data['PAD#'] == pad]
-            if all(row_id in matches for row_id in pad_rows['row_id']):
+            if all(annot_id in matches for annot_id in pad_rows['annot_id']):
                 completed_pads += 1
 
         api_stats.append({
@@ -178,7 +178,7 @@ def pad_list(api_name):
     pad_stats = []
     for pad in api_data['PAD#'].unique():
         pad_rows = api_data[api_data['PAD#'] == pad]
-        matched_count = sum(1 for row_id in pad_rows['row_id'] if row_id in matches)
+        matched_count = sum(1 for annot_id in pad_rows['annot_id'] if annot_id in matches)
 
         # Get sample name from first row
         sample = pad_rows.iloc[0]['Sample'] if pd.notna(pad_rows.iloc[0]['Sample']) else ''
@@ -236,11 +236,12 @@ def match_page(api_name, pad_num):
     rows_data = []
     for idx, row in pad_annotations.iterrows():
         row_dict = row.to_dict()
-        row_id = row['row_id']
-        matched_id = matches.get(row_id)
+        annot_id = int(row['annot_id'])
+        matched_id = matches.get(annot_id)
+        row_dict['annot_id'] = annot_id  # Include annot_id in the dict
         row_dict['matched_id'] = matched_id if matched_id != "no_match" else None
         row_dict['is_no_match'] = matched_id == "no_match"
-        row_dict['notes'] = notes.get(row_id, '')
+        row_dict['notes'] = notes.get(annot_id, '')
         rows_data.append(row_dict)
 
     # Convert candidates to dict for JSON
@@ -280,12 +281,12 @@ def match_page(api_name, pad_num):
 def save_match():
     """Save a match between annotation row and project card"""
     data = request.json
-    row_id = int(data['row_id'])
+    annot_id = int(data['annot_id'])  # Changed from row_id to annot_id
     card_id = data.get('card_id')
     is_no_match = data.get('is_no_match', False)
 
     # Get api_name and pad_num from the annotation
-    annotation_row = annotations_df[annotations_df['row_id'] == row_id]
+    annotation_row = annotations_df[annotations_df['annot_id'] == annot_id]
     api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
     pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
 
@@ -296,13 +297,13 @@ def save_match():
             current_matches = database.get_all_matches()
             if card_id in current_matches.values():
                 return jsonify({'success': False, 'error': 'ID already matched to another annotation'})
-            database.save_match(row_id, card_id, api_name, pad_num)
+            database.save_match(annot_id, card_id, api_name, pad_num)
         elif is_no_match:
             # Mark as no match
-            database.save_match(row_id, "no_match", api_name, pad_num)
+            database.save_match(annot_id, "no_match", api_name, pad_num)
         else:
             # Unmatching - delete the entry
-            database.save_match(row_id, None, api_name, pad_num)
+            database.save_match(annot_id, None, api_name, pad_num)
 
         # Reload matches for in-memory cache
         global matches
@@ -318,16 +319,16 @@ def save_match():
 def save_note():
     """Save notes for an annotation row"""
     data = request.json
-    row_id = int(data['row_id'])
+    annot_id = int(data['annot_id'])  # Changed from row_id to annot_id
     note_text = data.get('note', '')
 
     # Get api_name and pad_num from the annotation
-    annotation_row = annotations_df[annotations_df['row_id'] == row_id]
+    annotation_row = annotations_df[annotations_df['annot_id'] == annot_id]
     api_name = annotation_row['API'].iloc[0] if not annotation_row.empty else None
     pad_num = int(annotation_row['PAD#'].iloc[0]) if not annotation_row.empty else None
 
     try:
-        database.save_note(row_id, note_text, api_name, pad_num)
+        database.save_note(annot_id, note_text, api_name, pad_num)
 
         # Reload notes for in-memory cache
         global notes
@@ -353,7 +354,7 @@ def export_data():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Load ALL annotations including those with missing_card=True
-    annotations_file = os.path.join(base_dir, 'data', 'chemoPAD-student-annotations-with-flags.csv')
+    annotations_file = os.path.join(base_dir, 'data', 'chemoPAD-annotations-final.csv')
     all_annotations_df = pd.read_csv(annotations_file)
 
     # Create export dataframe - keep original annotation columns + missing_card flag
@@ -365,21 +366,12 @@ def export_data():
     keep_columns = [col for col in original_columns if col in all_annotations_df.columns]
     export_df = all_annotations_df[keep_columns].copy()
 
-    # Add row_id only for rows that are matchable (missing_card=False)
-    # This is needed to map to matches dictionary
-    matchable_df = all_annotations_df[all_annotations_df['missing_card'] != True].copy()
-    matchable_df['row_id'] = range(len(matchable_df))
-
-    # Create mapping from original index to row_id
-    index_to_rowid = dict(zip(matchable_df.index, matchable_df['row_id']))
-
-    # Add matched_id column - map using the index_to_rowid mapping
+    # Add matched_id column - map using annot_id directly
     export_df['matched_id'] = None
     for idx in export_df.index:
-        if idx in index_to_rowid:
-            row_id = index_to_rowid[idx]
-            if row_id in matches:
-                export_df.at[idx, 'matched_id'] = matches[row_id]
+        annot_id = int(export_df.at[idx, 'annot_id'])
+        if annot_id in matches:
+            export_df.at[idx, 'matched_id'] = matches[annot_id]
 
     # Add matched_sample_id right after matched_id
     export_df['matched_sample_id'] = None
@@ -396,18 +388,22 @@ def export_data():
     # Add notes column for student observations
     export_df['notes'] = None
 
-    # Fill in project data for matched rows (only for rows with missing_card=False)
-    for row_id, card_id in matches.items():
+    # Fill in project data for matched rows
+    for annot_id, card_id in matches.items():
+        # Find the row with this annot_id
+        matching_rows = export_df[export_df['annot_id'] == annot_id]
+        if len(matching_rows) == 0:
+            continue  # Skip if annot_id not found in export (shouldn't happen)
+
+        orig_idx = matching_rows.index[0]
+
         if card_id == "no_match":
             # For no_match annotations, still add the notes
-            orig_idx = matchable_df[matchable_df['row_id'] == row_id].index[0]
-            if row_id in notes:
-                export_df.at[orig_idx, 'notes'] = notes[row_id]
+            if annot_id in notes:
+                export_df.at[orig_idx, 'notes'] = notes[annot_id]
             export_df.at[orig_idx, 'matched_id'] = "no_match"
         elif card_id in project_cards_df['id'].values:
             card_data = project_cards_df[project_cards_df['id'] == card_id].iloc[0]
-            # Find the original index for this row_id
-            orig_idx = matchable_df[matchable_df['row_id'] == row_id].index[0]
 
             # Add sample_id right after matched_id
             export_df.at[orig_idx, 'matched_sample_id'] = card_data.get('sample_id')
@@ -422,15 +418,15 @@ def export_data():
                 export_df.at[orig_idx, 'matched_url'] = f"https://pad.crc.nd.edu{card_data['processed_file_location']}"
 
             # Add notes if any
-            if row_id in notes:
-                export_df.at[orig_idx, 'notes'] = notes[row_id]
+            if annot_id in notes:
+                export_df.at[orig_idx, 'notes'] = notes[annot_id]
 
     # Add notes for rows that have notes but aren't in matches
     # This handles annotations with notes that haven't been matched or marked as no_match yet
-    for row_id, note_text in notes.items():
-        if row_id not in matches:
-            # Find the original index for this row_id
-            matching_rows = matchable_df[matchable_df['row_id'] == row_id]
+    for annot_id, note_text in notes.items():
+        if annot_id not in matches:
+            # Find the row with this annot_id
+            matching_rows = export_df[export_df['annot_id'] == annot_id]
             if len(matching_rows) > 0:
                 orig_idx = matching_rows.index[0]
                 export_df.at[orig_idx, 'notes'] = note_text
@@ -494,7 +490,7 @@ def get_stats():
     total_pads = len(pad_groups)
 
     for pad, group in pad_groups:
-        if all(row_id in matches for row_id in group['row_id']):
+        if all(annot_id in matches for annot_id in group['annot_id']):
             completed_pads += 1
 
     return jsonify({

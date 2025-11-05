@@ -320,6 +320,28 @@ def save_match():
         global matches
         matches = database.get_all_matches()
 
+        # Check if this PAD is now complete and create auto-backup
+        if card_id or is_no_match:  # Only check completion if we're adding a match, not removing
+            # Find the PAD# for this annotation
+            annotation = annotations_df[annotations_df['annot_id'] == annot_id]
+            if not annotation.empty:
+                api_name = annotation.iloc[0]['API']
+                pad_num = annotation.iloc[0]['PAD#']
+
+                # Get all annotations for this PAD
+                pad_annotations = annotations_df[
+                    (annotations_df['API'] == api_name) &
+                    (annotations_df['PAD#'] == pad_num)
+                ]
+
+                # Check if all annotations for this PAD are now matched
+                all_matched = all(annot_id in matches for annot_id in pad_annotations['annot_id'])
+
+                if all_matched:
+                    # PAD is complete! Create auto-backup
+                    logger.info(f"PAD {pad_num} for API {api_name} is now complete. Creating auto-backup.")
+                    database.create_file_backup('auto')
+
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Error saving match: {e}")
@@ -399,8 +421,8 @@ def export_data():
     matches = database.get_all_matches()
     notes = database.get_all_notes()
 
-    # Create a database backup before export
-    database.backup_database()
+    # Create a file backup before export
+    database.create_file_backup('export')
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

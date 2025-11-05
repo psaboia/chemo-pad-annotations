@@ -12,6 +12,14 @@ http://pad-annotation.crc.nd.edu:8080/
 
 The application is already running on the VM, so you can start using it immediately.
 
+**Navigation Bar:**
+At the top of every page, you'll see:
+- **Dashboard**: Return to the main drug/API selection page
+- **Export Data**: Download all your matched data as a CSV file
+- **💾 Backup**: Create a manual backup of the database
+- **Help**: Access this guide
+- **Logout**: End your session
+
 ## Step 1: Select an API/Drug
 
 When you first open the application, you'll see the **Dashboard** with all available drugs/APIs.
@@ -38,6 +46,8 @@ After clicking "Enter", you'll see a list of all annotations that need to be mat
 - **PAD#**: Unique identifier for each annotation
 - **Sample**: Sample information from the annotation
 - **Rows**: Progress indicator (e.g., 0/6 means you've matched 0 out of 6 rows)
+- **Candidates**: Shows how many candidates are assigned vs. available for this PAD
+- **Notes**: 💬 Shows the number of rows with notes/comments
 - **Status**: Shows if the annotation is complete, partial, or not started
 - **Action**: "Start" button to begin matching
 
@@ -114,22 +124,38 @@ Click **"Save Match"** to record your selection and move to the next annotation.
 
 If you want to skip without saving, click **"Skip"**.
 
-## Step 4: Export Your Results
+## Step 4: Backup and Export
+
+### Automatic Backups
+
+Your work is protected by automatic backups:
+- **Auto-backup on completion**: When you finish matching all annotations in a PAD, an automatic backup is created
+- These backups are stored in the `database/backups/` directory on the server
+
+### Manual Backup
+
+You can create a manual backup at any time:
+1. Click the **💾 Backup** button in the navigation bar
+2. A backup file will be created with timestamp
+3. You'll see a success notification with the backup filename and size
+4. Manual backups are kept (last 5 backups retained)
+
+### Export Your Results
 
 When you're ready to download your matched data:
 
 ![Export Option](figs/match-page-export.png)
 
-1. Go back to the annotation list (click "Back to [Drug Name]")
-2. Scroll to the bottom
-3. Click **"Export All Matched Data"**
-4. A CSV file will be downloaded with:
+1. Click **"Export Data"** in the navigation bar (or go to the annotation list and scroll to the bottom)
+2. Click **"Export All Matched Data"**
+3. A CSV file will be downloaded with:
    - All original annotation data
    - **matched_id**: The dataset entry ID (or "no_match")
    - **matched_sample_id**: The sample ID
    - Matched dataset information
    - Any notes you added
    - Data quality flags
+4. A backup is automatically created when you export
 
 The file is named: `chemopad_matched_export_YYYYMMDD_HHMMSS.csv`
 
@@ -166,6 +192,15 @@ A: Your progress is automatically saved. When you come back, you'll see your pre
 **Q: How do I know if a candidate is already used?**
 A: Candidates that are already matched to other annotations have a red "Used" badge. You cannot select these.
 
+**Q: Can multiple people work on the application at the same time?**
+A: Yes! Multiple users can log in and work simultaneously. Each user has their own independent session, and all changes are saved directly to the database. However, if two users edit the same annotation at the same time, the last save will overwrite the previous one.
+
+**Q: What happens to the data when I log out?**
+A: Logging out only ends your session - it does NOT affect any data. All matches and notes are permanently saved in the database and will be available when you log back in.
+
+**Q: How often are backups created?**
+A: Backups are created automatically when: (1) you complete matching all annotations in a PAD, and (2) when you export data. You can also create manual backups anytime using the 💾 Backup button.
+
 ## Getting Help
 
 If you encounter any issues:
@@ -178,4 +213,4 @@ If you encounter any issues:
 
 **Access URL**: http://pad-annotation.crc.nd.edu:8080/
 **Version**: Flask-based web interface
-**Last Updated**: October 2025
+**Last Updated**: November 2025

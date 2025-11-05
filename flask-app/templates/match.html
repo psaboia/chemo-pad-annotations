@@ -54,7 +54,7 @@
                     <textarea id="notes-{{ annotation.annot_id }}"
                               class="notes-input"
                               onchange="saveNote({{ annotation.annot_id }}, this.value)"
-                              placeholder="Add observations about this annotation...">{{ annotation.notes }}</textarea>
+                              placeholder="Add observations about this annotation or images (reference Database ID)...">{{ annotation.notes }}</textarea>
                 </div>
 
                 <div class="action-buttons">
@@ -93,7 +93,11 @@
 
                         <div class="candidate-info">
                             <div class="info-row">
-                                <label>Sample ID:</label>
+                                <label>Database ID:</label>
+                                <span>{{ candidate.id }}</span>
+                            </div>
+                            <div class="info-row">
+                                <label>PAD ID:</label>
                                 <span>{{ candidate.sample_id or 'N/A' }}</span>
                             </div>
                             <div class="info-row">

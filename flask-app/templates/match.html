@@ -58,7 +58,6 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="edit-btn" onclick="editAnnotation({{ annotation.annot_id }})">Edit Fields</button>
                     <button class="no-match-btn {% if annotation.is_no_match %}active{% endif %}"
                             onclick="markNoMatch({{ annotation.annot_id }}, {{ 'true' if annotation.is_no_match else 'false' }})"
                             data-is-no-match="{{ 'true' if annotation.is_no_match else 'false' }}">
@@ -221,11 +220,6 @@ function saveNote(annotId, noteText) {
             alert('Error saving note');
         }
     });
-}
-
-function editAnnotation(annotId) {
-    // TODO: Implement edit modal
-    alert('Edit functionality coming soon!');
 }
 
 function exportPad() {

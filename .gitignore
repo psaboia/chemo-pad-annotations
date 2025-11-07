@@ -37,6 +37,10 @@ Thumbs.db
 exports/
 session/
 
+# Database files
+database/*.db
+database/backups/
+
 # uv
 uv.lock
 .python-version

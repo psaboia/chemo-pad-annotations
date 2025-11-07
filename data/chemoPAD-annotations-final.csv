@@ -1857,7 +1857,7 @@ annot_id,PAD#,Camera,"Lighting (lightbox, benchtop, benchtop dark)",black/white 
 1816.0,81654,pixel,benchtop,white,Mesna,3b2_3,64.1685,64.2,False
 1817.0,81654,pixel,lightbox,white,Mesna,3b2_3,64.1685,64.2,False
 1818.0,81654,pixel,no light,white,Mesna,3b2_3,64.1685,64.2,False
-1819.0,81654,ipad,benchtop,white,Mesna,3b2_4,64.1685,64.2,False
+1819.0,81283,ipad,benchtop,white,Mesna,3b2_4,64.1685,64.2,False
 1820.0,81283,ipad,lightbox,white,Mesna,3b2_4,64.1685,64.2,False
 1821.0,81283,ipad,no light,white,Mesna,3b2_4,64.1685,64.2,False
 1822.0,81283,pixel,benchtop,white,Mesna,3b2_4,64.1685,64.2,False

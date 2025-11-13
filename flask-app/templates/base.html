@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>ChemoPAD Annotation Matcher</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1, 10000) | random }}">
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <nav class="navigation-bar">
@@ -22,6 +23,8 @@
                 <a href="/" class="nav-link nav-home-link">🏠 Dashboard</a>
                 <span class="nav-separator">|</span>
                 {% endif %}
+                <a href="/gallery" class="nav-link">📸 Gallery</a>
+                <span class="nav-separator">|</span>
                 <a href="/api/export" class="nav-link">Export Data</a>
                 <span class="nav-separator">|</span>
                 <a href="#" id="backup-btn" class="nav-link" onclick="createBackup(event)">💾 Backup</a>

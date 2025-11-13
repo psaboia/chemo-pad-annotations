@@ -686,3 +686,29 @@ header h1, header h2 {
         opacity: 1;
     }
 }
+
+/* Gallery Card Styles */
+.gallery-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.gallery-card .api-name {
+    color: white;
+}
+
+.gallery-card .api-stats {
+    color: white;
+}
+
+.gallery-description {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    margin: 10px 0;
+    line-height: 1.4;
+}
+
+.gallery-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}

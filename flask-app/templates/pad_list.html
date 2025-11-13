@@ -60,6 +60,20 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Gallery Button -->
+    <div class="pad-list-actions" style="margin-top: 20px; text-align: center;">
+        <button class="gallery-btn" onclick="window.location.href='/gallery?api={{ api_name|urlencode }}'"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                       color: white;
+                       padding: 12px 30px;
+                       border: none;
+                       border-radius: 8px;
+                       font-size: 16px;
+                       cursor: pointer;">
+            📸 View Image Gallery for {{ api_name }}
+        </button>
+    </div>
 </div>
 
 <script>

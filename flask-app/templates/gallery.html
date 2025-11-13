@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="gallery-container">
+    <header class="gallery-header">
+        <h2>📸 Image Gallery - Quality Review</h2>
+        <p>Review image quality across different lighting conditions</p>
+    </header>
+
+    <div class="gallery-layout">
+        <!-- Filter Sidebar -->
+        <aside class="filter-sidebar">
+            <h3>📋 Filters</h3>
+
+            <!-- Lighting Filters -->
+            <div class="filter-group">
+                <h4>Lighting Conditions</h4>
+                {% for lighting in sorted_lighting %}
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="lighting" value="{{ lighting|lower }}" checked>
+                    {{ lighting|title }} ({{ lighting_groups[lighting]|length }})
+                </label>
+                {% endfor %}
+            </div>
+
+            <!-- Camera Filters -->
+            <div class="filter-group">
+                <h4>Camera Type</h4>
+                {% for camera in unique_cameras %}
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="camera" value="{{ camera|lower }}" checked>
+                    {{ camera }}
+                </label>
+                {% endfor %}
+            </div>
+
+            <!-- Background Filters -->
+            <div class="filter-group">
+                <h4>Background</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="background" value="white" checked>
+                    White
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="background" value="black" checked>
+                    Black
+                </label>
+            </div>
+
+            <!-- Drug/API Filter -->
+            <div class="filter-group">
+                <h4>Drug/API</h4>
+                <select id="api-filter" class="filter-select">
+                    <option value="all" {% if not api_filter %}selected{% endif %}>All Drugs</option>
+                    {% for api in unique_apis %}
+                    <option value="{{ api }}" {% if api_filter == api %}selected{% endif %}>{{ api }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Match Status Filters -->
+            <div class="filter-group">
+                <h4>Match Status</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="match_status" value="matched" checked>
+                    Matched
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="match_status" value="no_match" checked>
+                    No Match
+                </label>
+            </div>
+
+            <!-- Search -->
+            <div class="filter-group">
+                <h4>Search</h4>
+                <input type="text" id="search-input" class="filter-search" placeholder="PAD# or Sample...">
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+                <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn-secondary" onclick="resetFilters()">Reset</button>
+            </div>
+
+            <!-- Statistics -->
+            <div class="filter-stats">
+                <p>Showing: <span id="visible-count">0</span> / <span id="total-count">{{ gallery_data|length }}</span> images</p>
+            </div>
+        </aside>
+
+        <!-- Gallery Grid -->
+        <main class="gallery-grid">
+            {% for lighting in sorted_lighting %}
+            <section class="lighting-section" data-lighting="{{ lighting|lower }}">
+                <div class="section-header">
+                    <h3>
+                        {% if lighting == 'lightbox' %}💡{% elif lighting == 'benchtop' %}🔦{% else %}🌑{% endif %}
+                        {{ lighting|upper }}
+                        <span class="count-badge">{{ lighting_groups[lighting]|length }} images</span>
+                    </h3>
+                    <button class="toggle-section" onclick="toggleSection('{{ lighting|lower }}')">▼</button>
+                </div>
+                <div class="image-grid" id="grid-{{ lighting }}">
+                    {% for item in lighting_groups[lighting] %}
+                    <div class="gallery-item"
+                         data-annot-id="{{ item.annot_id }}"
+                         data-pad="{{ item.pad_num }}"
+                         data-lighting="{{ item.lighting|lower }}"
+                         data-camera="{{ item.camera|lower }}"
+                         data-background="{{ item.background|lower }}"
+                         data-api="{{ item.api }}"
+                         data-sample="{{ item.sample|lower }}"
+                         data-status="{{ item.match_status }}">
+
+                        {% if item.image_url %}
+                        <div class="image-container">
+                            <img class="gallery-image lazy"
+                                 data-src="{{ item.image_url }}"
+                                 alt="PAD {{ item.pad_num }} - {{ item.lighting }}"
+                                 onclick="openImageModal('{{ item.image_url|e }}', '{{ item.pad_num }}', '{{ item.lighting|e }}')">
+                            <div class="image-overlay">
+                                <span class="overlay-text">PAD#{{ item.pad_num }}</span>
+                                <span class="overlay-text">{{ item.camera }}</span>
+                                <span class="overlay-text">{{ item.api }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="no-image-container">
+                            <svg class="no-image-placeholder" viewBox="0 0 200 200">
+                                <rect width="200" height="200" fill="#f0f0f0"/>
+                                <text x="100" y="100" text-anchor="middle" fill="#999" font-size="14">
+                                    {% if item.match_status == 'unmatched' %}
+                                    Not Matched
+                                    {% elif item.match_status == 'no_match' %}
+                                    No Match
+                                    {% else %}
+                                    No Image
+                                    {% endif %}
+                                </text>
+                                <text x="100" y="120" text-anchor="middle" fill="#999" font-size="10">
+                                    PAD#{{ item.pad_num }}
+                                </text>
+                            </svg>
+                            <div class="image-overlay">
+                                <span class="overlay-text">PAD#{{ item.pad_num }}</span>
+                                <span class="overlay-text">{{ item.camera }}</span>
+                                <span class="overlay-text">{{ item.api }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Quality Indicators -->
+                        {% if item.note %}
+                        <div class="quality-indicator" title="{{ item.note }}">
+                            💬 Note
+                        </div>
+                        {% endif %}
+
+                        <!-- Match Status Badge -->
+                        <div class="status-badge status-{{ item.match_status }}">
+                            {{ item.match_status|title }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </main>
+    </div>
+</div>
+
+<!-- Image Modal (reuse from match.html) -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal" onclick="closeImageModal()">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" class="modal-image" src="" alt="Expanded image">
+        <div id="modalCaption" class="modal-caption"></div>
+    </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script>
+    const galleryData = {{ gallery_data | tojson | safe }};
+    const preselectedAPI = {{ (api_filter | tojson) if api_filter else 'null' | safe }};
+</script>
+
+<!-- Load gallery-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+{% endblock %}

@@ -580,6 +580,81 @@ def get_stats():
         'pad_progress': (completed_pads / total_pads * 100) if total_pads > 0 else 0
     })
 
+@app.route('/gallery')
+@login_required
+def gallery():
+    """Image gallery for quality review organized by lighting conditions"""
+    # Reload matches from database to get latest data
+    global matches
+    matches = database.get_all_matches()
+
+    # Get optional API filter from URL parameter
+    api_filter = request.args.get('api', None)
+
+    # Prepare image data with all annotations
+    gallery_data = []
+
+    for idx, row in annotations_df.iterrows():
+        annot_id = row['annot_id']
+        pad_num = row['PAD#']
+
+        # Get match status
+        matched_card_id = matches.get(annot_id, None)
+        match_status = 'unmatched' if matched_card_id is None else ('no_match' if matched_card_id == 'no_match' else 'matched')
+
+        # If matched to a card, get the image URL
+        image_url = None
+        if matched_card_id and matched_card_id != 'no_match':
+            # Find the project card
+            card = project_cards_df[project_cards_df['id'] == matched_card_id]
+            if not card.empty:
+                image_path = card.iloc[0]['processed_file_location']
+                if pd.notna(image_path):
+                    # Convert path to URL
+                    image_url = image_path.replace('/var/www/html/', 'https://pad.crc.nd.edu/')
+
+        # Get note if exists
+        note = notes.get(annot_id, '')
+
+        gallery_data.append({
+            'annot_id': int(annot_id),
+            'pad_num': int(pad_num),
+            'lighting': row['Lighting (lightbox, benchtop, benchtop dark)'],
+            'camera': row['Camera'],
+            'background': row['black/white background'],
+            'api': row['API'],
+            'sample': row['Sample'] if pd.notna(row['Sample']) else '',
+            'concentration': row['mg concentration (w/w mg/mg or w/v mg/mL)'] if pd.notna(row['mg concentration (w/w mg/mg or w/v mg/mL)']) else '',
+            'match_status': match_status,
+            'image_url': image_url,
+            'card_id': matched_card_id if matched_card_id and matched_card_id != 'no_match' else None,
+            'note': note
+        })
+
+    # Group by lighting condition
+    lighting_groups = {}
+    for item in gallery_data:
+        lighting = item['lighting']
+        if lighting not in lighting_groups:
+            lighting_groups[lighting] = []
+        lighting_groups[lighting].append(item)
+
+    # Sort lighting groups for consistent display
+    lighting_order = ['lightbox', 'benchtop', 'no light']
+    sorted_lighting = sorted(lighting_groups.keys(), key=lambda x: lighting_order.index(x) if x in lighting_order else 999)
+
+    # Get unique values for filters
+    unique_cameras = sorted(annotations_df['Camera'].unique())
+    unique_apis = sorted(annotations_df['API'].unique())
+
+    return render_template('gallery.html',
+                         gallery_data=gallery_data,
+                         lighting_groups=lighting_groups,
+                         sorted_lighting=sorted_lighting,
+                         unique_cameras=unique_cameras,
+                         unique_apis=unique_apis,
+                         api_filter=api_filter)
+
 # Load data when module is imported (for gunicorn)
 try:
     load_data()

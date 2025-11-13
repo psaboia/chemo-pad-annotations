@@ -276,13 +276,13 @@ window.onclick = function(event) {
     }
 }
 
-// Mark card as invalid
+// Mark card with issue
 async function markInvalid(cardId) {
     let reason = '';
 
     // Keep prompting until user enters a reason or cancels
     while (true) {
-        reason = prompt('Reason for marking invalid (required):');
+        reason = prompt('Describe the issue with this card (required):');
 
         // User cancelled
         if (reason === null) return;
@@ -293,7 +293,7 @@ async function markInvalid(cardId) {
         }
 
         // Show error and prompt again
-        alert('Please provide a reason for marking this card as invalid.');
+        alert('Please provide a description of the issue.');
     }
 
     try {
@@ -311,18 +311,18 @@ async function markInvalid(cardId) {
             // Reload page to reflect changes
             location.reload();
         } else {
-            alert('Error marking card as invalid: ' + data.error);
+            alert('Error flagging card: ' + data.error);
         }
     } catch (error) {
-        alert('Error marking card as invalid: ' + error);
+        alert('Error flagging card: ' + error);
     }
 }
 
 window.markInvalid = markInvalid;
 
-// Unmark card as invalid
+// Remove issue flag from card
 async function unmarkInvalid(cardId) {
-    if (!confirm('Remove invalid mark from this card?')) return;
+    if (!confirm('Remove issue flag from this card?')) return;
 
     try {
         const response = await fetch('/api/unmark-card-invalid', {
@@ -338,10 +338,10 @@ async function unmarkInvalid(cardId) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Error unmarking card: ' + data.error);
+            alert('Error removing issue flag: ' + data.error);
         }
     } catch (error) {
-        alert('Error unmarking card: ' + error);
+        alert('Error removing issue flag: ' + error);
     }
 }
 

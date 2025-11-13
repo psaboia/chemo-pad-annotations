@@ -33,7 +33,7 @@
                 {% endfor %}
             </div>
 
-            <!-- Invalid Status Filter -->
+            <!-- Issue Status Filter -->
             <div class="filter-group">
                 <h4>Card Status</h4>
                 <label class="filter-checkbox">
@@ -42,7 +42,7 @@
                 </label>
                 <label class="filter-checkbox">
                     <input type="checkbox" name="status" value="invalid">
-                    Marked Invalid
+                    With Issue
                 </label>
             </div>
 
@@ -125,22 +125,22 @@
                             {% if card.is_invalid %}
                             <button class="btn-mark-invalid marked"
                                     onclick="unmarkInvalid({{ card.card_id }})"
-                                    title="Unmark as invalid">
+                                    title="Remove issue flag">
                                 ✓
                             </button>
                             {% else %}
                             <button class="btn-mark-invalid"
                                     onclick="markInvalid({{ card.card_id }})"
-                                    title="Mark as invalid/duplicate">
+                                    title="Flag card with issue">
                                 ❌
                             </button>
                             {% endif %}
                         </div>
 
-                        <!-- Invalid Badge -->
+                        <!-- Issue Badge -->
                         {% if card.is_invalid %}
                         <div class="status-badge status-invalid">
-                            Invalid
+                            Issue
                         </div>
                         {% endif %}
                     </div>

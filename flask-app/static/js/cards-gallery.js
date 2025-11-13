@@ -278,8 +278,23 @@ window.onclick = function(event) {
 
 // Mark card as invalid
 async function markInvalid(cardId) {
-    const reason = prompt('Reason for marking invalid (optional):');
-    if (reason === null) return; // User cancelled
+    let reason = '';
+
+    // Keep prompting until user enters a reason or cancels
+    while (true) {
+        reason = prompt('Reason for marking invalid (required):');
+
+        // User cancelled
+        if (reason === null) return;
+
+        // Check if reason is not empty
+        if (reason.trim() !== '') {
+            break;
+        }
+
+        // Show error and prompt again
+        alert('Please provide a reason for marking this card as invalid.');
+    }
 
     try {
         const response = await fetch('/api/mark-card-invalid', {
@@ -287,7 +302,7 @@ async function markInvalid(cardId) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ card_id: cardId, reason: reason })
+            body: JSON.stringify({ card_id: cardId, reason: reason.trim() })
         });
 
         const data = await response.json();

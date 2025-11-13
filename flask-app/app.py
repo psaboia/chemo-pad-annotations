@@ -163,7 +163,15 @@ def dashboard():
     # Sort by name
     api_stats.sort(key=lambda x: x['name'])
 
-    return render_template('dashboard.html', apis=api_stats)
+    # Calculate overall stats for dashboard cards
+    stats = {
+        'total_annotations': len(annotations_df),
+        'total_project_cards': len(project_cards_df),
+        'total_matches': len(matches),
+        'total_notes': len(notes)
+    }
+
+    return render_template('dashboard.html', apis=api_stats, stats=stats)
 
 @app.route('/api/<path:api_name>')
 @login_required

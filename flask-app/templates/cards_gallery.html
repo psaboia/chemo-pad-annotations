@@ -139,7 +139,9 @@
 
                         <!-- Issue Badge -->
                         {% if card.is_invalid %}
-                        <div class="status-badge status-invalid">
+                        <div class="status-badge status-invalid clickable-badge"
+                             title="{{ card.invalid_reason }}"
+                             onclick="editIssue({{ card.card_id }}, '{{ card.invalid_reason|replace("'", "\\'") }}')">
                             Issue
                         </div>
                         {% endif %}

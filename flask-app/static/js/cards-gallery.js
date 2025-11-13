@@ -347,6 +347,52 @@ async function unmarkInvalid(cardId) {
 
 window.unmarkInvalid = unmarkInvalid;
 
+// Edit issue description
+async function editIssue(cardId, currentReason) {
+    let newReason = '';
+
+    // Show current reason and prompt for new one
+    while (true) {
+        newReason = prompt('Edit issue description:\n\nCurrent: ' + currentReason, currentReason);
+
+        // User cancelled
+        if (newReason === null) return;
+
+        // Check if reason is not empty
+        if (newReason.trim() !== '') {
+            break;
+        }
+
+        // Show error and prompt again
+        alert('Please provide a description of the issue.');
+    }
+
+    // If unchanged, do nothing
+    if (newReason.trim() === currentReason) return;
+
+    try {
+        const response = await fetch('/api/mark-card-invalid', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ card_id: cardId, reason: newReason.trim() })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating issue: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error updating issue: ' + error);
+    }
+}
+
+window.editIssue = editIssue;
+
 // Quick match modal
 let currentCardIdForMatch = null;
 

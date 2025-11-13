@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="gallery-container">
+    <header class="gallery-header">
+        <h2>🔍 Unmatched Cards Gallery</h2>
+        <p>Review and match project cards that haven't been linked to annotations yet</p>
+    </header>
+
+    <div class="gallery-layout">
+        <!-- Filter Sidebar -->
+        <aside class="filter-sidebar">
+            <h3>📋 Filters</h3>
+
+            <!-- Drug/API Filter -->
+            <div class="filter-group">
+                <h4>Drug/API</h4>
+                <select id="api-filter" class="filter-select">
+                    <option value="all" {% if not api_filter %}selected{% endif %}>All Drugs</option>
+                    {% for api in sorted_apis %}
+                    <option value="{{ api }}" {% if api_filter == api %}selected{% endif %}>{{ api }} ({{ api_groups[api]|length }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Camera Filters -->
+            <div class="filter-group">
+                <h4>Camera Type</h4>
+                {% for camera in unique_cameras %}
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="camera" value="{{ camera|lower }}" checked>
+                    {{ camera }}
+                </label>
+                {% endfor %}
+            </div>
+
+            <!-- Invalid Status Filter -->
+            <div class="filter-group">
+                <h4>Card Status</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="status" value="valid" checked>
+                    Valid
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="status" value="invalid">
+                    Marked Invalid
+                </label>
+            </div>
+
+            <!-- Search -->
+            <div class="filter-group">
+                <h4>Search</h4>
+                <input type="text" id="search-input" class="filter-search" placeholder="Card ID or Sample...">
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+                <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn-secondary" onclick="resetFilters()">Reset</button>
+            </div>
+
+            <!-- Statistics -->
+            <div class="filter-stats">
+                <p>Showing: <span id="visible-count">0</span> / <span id="total-count">{{ total_unmatched }}</span> cards</p>
+            </div>
+
+            <!-- Export Button -->
+            <div class="filter-actions">
+                <button class="btn-export" onclick="exportFilteredCards()">📥 Export CSV</button>
+            </div>
+        </aside>
+
+        <!-- Gallery Grid -->
+        <main class="gallery-grid">
+            {% for api in sorted_apis %}
+            <section class="api-section" data-api="{{ api|lower }}">
+                <div class="section-header">
+                    <h3>
+                        💊 {{ api }}
+                        <span class="count-badge">{{ api_groups[api]|length }} cards</span>
+                    </h3>
+                    <button class="toggle-section" onclick="toggleSection('{{ api|lower }}')">▼</button>
+                </div>
+                <div class="image-grid" id="grid-{{ api|lower }}">
+                    {% for card in api_groups[api] %}
+                    <div class="gallery-item card-item"
+                         data-card-id="{{ card.card_id }}"
+                         data-api="{{ card.api|lower }}"
+                         data-sample="{{ card.sample_name|lower }}"
+                         data-camera="{{ card.camera|lower }}"
+                         data-status="{% if card.is_invalid %}invalid{% else %}valid{% endif %}">
+
+                        {% if card.image_url %}
+                        <div class="image-container">
+                            <img class="gallery-image lazy"
+                                 data-src="{{ card.image_url }}"
+                                 alt="Card {{ card.card_id }} - {{ card.sample_name }}"
+                                 onclick="openImageModal('{{ card.image_url|e }}', '{{ card.card_id }}', '{{ card.sample_name|e }}')">
+                            <div class="image-overlay">
+                                <span class="overlay-text">Card #{{ card.card_id }}</span>
+                                <span class="overlay-text">{{ card.camera }}</span>
+                                <span class="overlay-text">{{ card.sample_name }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="no-image-container">
+                            <svg class="no-image-placeholder" viewBox="0 0 200 200">
+                                <rect width="200" height="200" fill="#f0f0f0"/>
+                                <text x="100" y="100" text-anchor="middle" fill="#999" font-size="14">
+                                    No Image
+                                </text>
+                                <text x="100" y="120" text-anchor="middle" fill="#999" font-size="10">
+                                    Card #{{ card.card_id }}
+                                </text>
+                            </svg>
+                        </div>
+                        {% endif %}
+
+                        <!-- Card Actions -->
+                        <div class="card-actions">
+                            <button class="btn-quick-match"
+                                    onclick="openQuickMatchModal({{ card.card_id }}, '{{ card.sample_name|e }}')"
+                                    title="Quick match to annotation">
+                                🔗
+                            </button>
+                            {% if card.is_invalid %}
+                            <button class="btn-mark-invalid marked"
+                                    onclick="unmarkInvalid({{ card.card_id }})"
+                                    title="Unmark as invalid">
+                                ✓
+                            </button>
+                            {% else %}
+                            <button class="btn-mark-invalid"
+                                    onclick="markInvalid({{ card.card_id }})"
+                                    title="Mark as invalid/duplicate">
+                                ❌
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Invalid Badge -->
+                        {% if card.is_invalid %}
+                        <div class="status-badge status-invalid">
+                            Invalid
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </main>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal" onclick="closeImageModal()">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" class="modal-image" src="" alt="Expanded image">
+        <div id="modalCaption" class="modal-caption"></div>
+    </div>
+</div>
+
+<!-- Quick Match Modal -->
+<div id="quickMatchModal" class="quick-match-modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>Quick Match Card</h3>
+            <span class="close-modal" onclick="closeQuickMatchModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Match card <strong id="matchCardId"></strong> (<span id="matchCardSample"></span>) to annotation:</p>
+            <input type="text" id="annotationSearch" class="form-input" placeholder="Search by PAD# or annotation ID...">
+            <div id="annotationResults" class="annotation-results"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeQuickMatchModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script>
+    const cardsData = {{ cards_data | tojson | safe }};
+    const preselectedAPI = {{ (api_filter | tojson) if api_filter else 'null' | safe }};
+</script>
+
+<!-- Load cards-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/cards-gallery.js') }}"></script>
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards-gallery.css') }}">
+{% endblock %}

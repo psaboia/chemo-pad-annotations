@@ -67,6 +67,15 @@ def init_db():
             )
         ''')
 
+        # Create invalid_cards table for marking duplicate/problematic cards
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS invalid_cards (
+                card_id INTEGER PRIMARY KEY,
+                reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         conn.commit()
         logger.info("Database initialized successfully")
 
@@ -317,12 +326,46 @@ def get_stats():
         match_count = conn.execute('SELECT COUNT(*) FROM matches').fetchone()[0]
         note_count = conn.execute('SELECT COUNT(*) FROM notes').fetchone()[0]
         backup_count = conn.execute('SELECT COUNT(*) FROM backups').fetchone()[0]
+        invalid_card_count = conn.execute('SELECT COUNT(*) FROM invalid_cards').fetchone()[0]
 
         return {
             'total_matches': match_count,
             'total_notes': note_count,
-            'total_backups': backup_count
+            'total_backups': backup_count,
+            'total_invalid_cards': invalid_card_count
         }
+
+def mark_card_invalid(card_id, reason=''):
+    """Mark a card as invalid/duplicate"""
+    with get_db() as conn:
+        conn.execute('''
+            INSERT OR REPLACE INTO invalid_cards (card_id, reason)
+            VALUES (?, ?)
+        ''', (card_id, reason))
+        conn.commit()
+        logger.info(f"Marked card as invalid: card_id={card_id}, reason={reason}")
+
+def unmark_card_invalid(card_id):
+    """Remove invalid mark from a card"""
+    with get_db() as conn:
+        conn.execute('DELETE FROM invalid_cards WHERE card_id = ?', (card_id,))
+        conn.commit()
+        logger.info(f"Unmarked card as invalid: card_id={card_id}")
+
+def get_all_invalid_cards():
+    """Get all invalid cards as a dictionary"""
+    invalid_cards = {}
+    with get_db() as conn:
+        cursor = conn.execute('SELECT card_id, reason FROM invalid_cards')
+        for row in cursor:
+            invalid_cards[row['card_id']] = row['reason']
+    return invalid_cards
+
+def is_card_invalid(card_id):
+    """Check if a card is marked as invalid"""
+    with get_db() as conn:
+        result = conn.execute('SELECT 1 FROM invalid_cards WHERE card_id = ?', (card_id,)).fetchone()
+        return result is not None
 
 # Initialize database when module is imported
 init_db()

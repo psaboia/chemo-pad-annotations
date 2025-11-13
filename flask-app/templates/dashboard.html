@@ -36,6 +36,19 @@
             </div>
             <button class="enter-btn">View Gallery →</button>
         </div>
+
+        <!-- Unmatched Cards Card -->
+        <div class="api-card gallery-card" onclick="window.location.href='/cards-gallery'">
+            <div class="api-name">🔍 Unmatched Cards</div>
+            <div class="api-stats">
+                <div class="stat-icon">{{ stats.total_project_cards - stats.total_matches }}</div>
+                <div class="stat-text">Cards to Review</div>
+            </div>
+            <div class="gallery-description">
+                Browse and match project cards not yet linked to annotations
+            </div>
+            <button class="enter-btn">View Cards →</button>
+        </div>
     </div>
 </div>
 

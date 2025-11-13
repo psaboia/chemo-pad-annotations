@@ -655,6 +655,122 @@ def gallery():
                          unique_apis=unique_apis,
                          api_filter=api_filter)
 
+@app.route('/cards-gallery')
+@login_required
+def cards_gallery():
+    """Gallery of unmatched project cards for review and matching"""
+    # Reload matches from database
+    global matches
+    matches = database.get_all_matches()
+
+    # Get invalid cards
+    invalid_cards = database.get_all_invalid_cards()
+
+    # Get optional API filter from URL parameter
+    api_filter = request.args.get('api', None)
+
+    # Get all matched card IDs
+    matched_card_ids = set([card_id for card_id in matches.values() if card_id != 'no_match'])
+
+    # Prepare unmatched cards data
+    cards_data = []
+
+    for idx, row in project_cards_df.iterrows():
+        card_id = row['id']
+
+        # Skip if card is already matched or marked as invalid
+        if card_id in matched_card_ids:
+            continue
+
+        # Extract API/drug name from sample_name
+        sample_name = row['sample_name'] if pd.notna(row['sample_name']) else 'Unknown'
+        api = sample_name.split('(')[0].strip() if '(' in sample_name else sample_name
+
+        # Get image URL
+        image_url = None
+        if pd.notna(row['processed_file_location']):
+            image_url = row['processed_file_location'].replace('/var/www/html/', 'https://pad.crc.nd.edu/')
+
+        # Parse camera type
+        camera = row['camera_type_1'] if pd.notna(row['camera_type_1']) else 'Unknown'
+
+        # Parse date
+        date_created = row['date_of_creation'] if pd.notna(row['date_of_creation']) else ''
+
+        # Check if marked as invalid
+        is_invalid = card_id in invalid_cards
+        invalid_reason = invalid_cards.get(card_id, '') if is_invalid else ''
+
+        cards_data.append({
+            'card_id': int(card_id),
+            'api': api,
+            'sample_name': sample_name,
+            'camera': camera,
+            'date': date_created,
+            'image_url': image_url,
+            'is_invalid': is_invalid,
+            'invalid_reason': invalid_reason,
+            'quantity': row['quantity'] if pd.notna(row['quantity']) else None,
+            'notes': row['notes'] if pd.notna(row['notes']) else ''
+        })
+
+    # Group by API
+    api_groups = {}
+    for card in cards_data:
+        api = card['api']
+        if api not in api_groups:
+            api_groups[api] = []
+        api_groups[api].append(card)
+
+    # Sort API groups alphabetically
+    sorted_apis = sorted(api_groups.keys())
+
+    # Get unique cameras for filters
+    unique_cameras = sorted(set([card['camera'] for card in cards_data]))
+
+    return render_template('cards_gallery.html',
+                         cards_data=cards_data,
+                         api_groups=api_groups,
+                         sorted_apis=sorted_apis,
+                         unique_cameras=unique_cameras,
+                         api_filter=api_filter,
+                         total_unmatched=len(cards_data))
+
+@app.route('/api/mark-card-invalid', methods=['POST'])
+@login_required
+def mark_card_invalid_route():
+    """Mark a card as invalid/duplicate"""
+    data = request.json
+    card_id = data.get('card_id')
+    reason = data.get('reason', '')
+
+    if not card_id:
+        return jsonify({'success': False, 'error': 'card_id required'}), 400
+
+    try:
+        database.mark_card_invalid(int(card_id), reason)
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error marking card invalid: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/unmark-card-invalid', methods=['POST'])
+@login_required
+def unmark_card_invalid_route():
+    """Remove invalid mark from a card"""
+    data = request.json
+    card_id = data.get('card_id')
+
+    if not card_id:
+        return jsonify({'success': False, 'error': 'card_id required'}), 400
+
+    try:
+        database.unmark_card_invalid(int(card_id))
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error unmarking card invalid: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Load data when module is imported (for gunicorn)
 try:
     load_data()

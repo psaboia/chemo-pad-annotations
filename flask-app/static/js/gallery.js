@@ -312,10 +312,11 @@ function handleModalKeyPress(event) {
     }
 }
 
-// Click outside modal to close
+// Click anywhere on modal to close
 window.onclick = function(event) {
     const modal = document.getElementById('imageModal');
-    if (event.target == modal) {
+    // Close if clicking on the modal (background or anywhere inside it)
+    if (event.target.id === 'imageModal' || event.target.closest('#imageModal')) {
         closeImageModal();
     }
 }

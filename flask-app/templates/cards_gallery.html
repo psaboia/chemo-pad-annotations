@@ -2,8 +2,8 @@
 {% block content %}
 <div class="gallery-container">
     <header class="gallery-header">
-        <h2>🔍 Unmatched Cards Gallery</h2>
-        <p>Review and match project cards that haven't been linked to annotations yet</p>
+        <h2>📦 Lab Card Inventory</h2>
+        <p>Browse and manage all project cards in the laboratory database</p>
     </header>
 
     <div class="gallery-layout">
@@ -46,6 +46,19 @@
                 </label>
             </div>
 
+            <!-- Match Status Filter -->
+            <div class="filter-group">
+                <h4>Match Status</h4>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="match" value="matched" checked>
+                    Matched
+                </label>
+                <label class="filter-checkbox">
+                    <input type="checkbox" name="match" value="unmatched" checked>
+                    Unmatched
+                </label>
+            </div>
+
             <!-- Search -->
             <div class="filter-group">
                 <h4>Search</h4>
@@ -60,7 +73,11 @@
 
             <!-- Statistics -->
             <div class="filter-stats">
-                <p>Showing: <span id="visible-count">0</span> / <span id="total-count">{{ total_unmatched }}</span> cards</p>
+                <p>Showing: <span id="visible-count">0</span> / <span id="total-count">{{ total_cards }}</span> cards</p>
+                <p class="stats-detail">
+                    <span style="color: #28a745;">✓ {{ total_matched }} matched</span> |
+                    <span style="color: #dc3545;">✗ {{ total_unmatched }} unmatched</span>
+                </p>
             </div>
 
             <!-- Export Button -->
@@ -87,7 +104,8 @@
                          data-api="{{ card.api|lower }}"
                          data-sample="{{ card.sample_name|lower }}"
                          data-camera="{{ card.camera|lower }}"
-                         data-status="{% if card.is_invalid %}invalid{% else %}valid{% endif %}">
+                         data-status="{% if card.is_invalid %}invalid{% else %}valid{% endif %}"
+                         data-match="{% if card.is_matched %}matched{% else %}unmatched{% endif %}">
 
                         {% if card.image_url %}
                         <div class="image-container">
@@ -143,6 +161,13 @@
                              title="{{ card.invalid_reason }}"
                              onclick="editIssue({{ card.card_id }}, '{{ card.invalid_reason|replace("'", "\\'") }}')">
                             Issue
+                        </div>
+                        {% endif %}
+
+                        <!-- Match Status Badge -->
+                        {% if card.is_matched %}
+                        <div class="status-badge status-matched">
+                            ✓ Matched
                         </div>
                         {% endif %}
                     </div>

@@ -24,30 +24,30 @@
         </div>
         {% endfor %}
 
-        <!-- Gallery Card -->
+        <!-- Annotation Review Card -->
         <div class="api-card gallery-card" onclick="window.location.href='/gallery'">
-            <div class="api-name">📸 Image Gallery</div>
+            <div class="api-name">🔬 Annotation Review</div>
             <div class="api-stats">
                 <div class="stat-icon">🔍</div>
-                <div class="stat-text">Quality Review</div>
+                <div class="stat-text">PAD Annotations</div>
             </div>
             <div class="gallery-description">
-                Review image quality across different lighting conditions
+                Quality review of PAD annotations by lighting conditions
             </div>
-            <button class="enter-btn">View Gallery →</button>
+            <button class="enter-btn">Review Annotations →</button>
         </div>
 
-        <!-- Unmatched Cards Card -->
+        <!-- Lab Card Inventory Card -->
         <div class="api-card gallery-card" onclick="window.location.href='/cards-gallery'">
-            <div class="api-name">🔍 Unmatched Cards</div>
+            <div class="api-name">📦 Lab Card Inventory</div>
             <div class="api-stats">
-                <div class="stat-icon">{{ stats.total_project_cards - stats.total_matches }}</div>
-                <div class="stat-text">Cards to Review</div>
+                <div class="stat-icon">{{ stats.total_project_cards }}</div>
+                <div class="stat-text">Total Cards</div>
             </div>
             <div class="gallery-description">
-                Browse and match project cards not yet linked to annotations
+                Browse all project cards in the laboratory database
             </div>
-            <button class="enter-btn">View Cards →</button>
+            <button class="enter-btn">View Inventory →</button>
         </div>
     </div>
 </div>

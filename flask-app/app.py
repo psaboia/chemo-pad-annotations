@@ -591,7 +591,7 @@ def get_stats():
 @app.route('/gallery')
 @login_required
 def gallery():
-    """Image gallery for quality review organized by lighting conditions"""
+    """Annotation Review - Quality review of PAD annotations organized by lighting conditions"""
     # Reload matches from database to get latest data
     global matches
     matches = database.get_all_matches()
@@ -666,7 +666,7 @@ def gallery():
 @app.route('/cards-gallery')
 @login_required
 def cards_gallery():
-    """Gallery of unmatched project cards for review and matching"""
+    """Lab Card Inventory - Gallery of all project cards (matched and unmatched)"""
     # Reload matches from database
     global matches
     matches = database.get_all_matches()
@@ -680,15 +680,11 @@ def cards_gallery():
     # Get all matched card IDs
     matched_card_ids = set([card_id for card_id in matches.values() if card_id != 'no_match'])
 
-    # Prepare unmatched cards data
+    # Prepare ALL cards data (both matched and unmatched)
     cards_data = []
 
     for idx, row in project_cards_df.iterrows():
         card_id = row['id']
-
-        # Skip if card is already matched or marked as invalid
-        if card_id in matched_card_ids:
-            continue
 
         # Extract API/drug name from sample_name
         sample_name = row['sample_name'] if pd.notna(row['sample_name']) else 'Unknown'
@@ -705,6 +701,9 @@ def cards_gallery():
         # Parse date
         date_created = row['date_of_creation'] if pd.notna(row['date_of_creation']) else ''
 
+        # Check if matched
+        is_matched = card_id in matched_card_ids
+
         # Check if marked as invalid
         is_invalid = card_id in invalid_cards
         invalid_reason = invalid_cards.get(card_id, '') if is_invalid else ''
@@ -716,6 +715,7 @@ def cards_gallery():
             'camera': camera,
             'date': date_created,
             'image_url': image_url,
+            'is_matched': is_matched,
             'is_invalid': is_invalid,
             'invalid_reason': invalid_reason,
             'quantity': row['quantity'] if pd.notna(row['quantity']) else None,
@@ -736,13 +736,19 @@ def cards_gallery():
     # Get unique cameras for filters
     unique_cameras = sorted(set([card['camera'] for card in cards_data]))
 
+    # Count matched vs unmatched
+    total_matched = sum(1 for card in cards_data if card['is_matched'])
+    total_unmatched = len(cards_data) - total_matched
+
     return render_template('cards_gallery.html',
                          cards_data=cards_data,
                          api_groups=api_groups,
                          sorted_apis=sorted_apis,
                          unique_cameras=unique_cameras,
                          api_filter=api_filter,
-                         total_unmatched=len(cards_data))
+                         total_cards=len(cards_data),
+                         total_matched=total_matched,
+                         total_unmatched=total_unmatched)
 
 @app.route('/api/mark-card-invalid', methods=['POST'])
 @login_required

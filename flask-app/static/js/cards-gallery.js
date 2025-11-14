@@ -96,6 +96,7 @@ function getActiveFilters() {
     const filters = {
         camera: [],
         status: [],
+        match: [],
         api: 'all',
         search: ''
     };
@@ -108,6 +109,11 @@ function getActiveFilters() {
     // Get checked status filters
     document.querySelectorAll('input[name="status"]:checked').forEach(input => {
         filters.status.push(input.value);
+    });
+
+    // Get checked match status filters
+    document.querySelectorAll('input[name="match"]:checked').forEach(input => {
+        filters.match.push(input.value);
     });
 
     // Get API filter
@@ -139,6 +145,14 @@ function matchesFilters(item, filters) {
     if (filters.status.length > 0) {
         const itemStatus = item.dataset.status;
         if (!filters.status.includes(itemStatus)) {
+            return false;
+        }
+    }
+
+    // Check match status
+    if (filters.match.length > 0) {
+        const itemMatch = item.dataset.match;
+        if (!filters.match.includes(itemMatch)) {
             return false;
         }
     }

@@ -58,6 +58,12 @@
     color: white;
 }
 
+/* Matched Status Badge */
+.status-matched {
+    background: #28a745;
+    color: white;
+}
+
 /* Clickable Badge */
 .clickable-badge {
     cursor: pointer;
@@ -175,6 +181,13 @@
 .info-message {
     color: #666;
     line-height: 1.5;
+}
+
+/* Statistics Detail */
+.stats-detail {
+    font-size: 12px;
+    margin-top: 5px;
+    text-align: center;
 }
 
 /* API Section Styling */

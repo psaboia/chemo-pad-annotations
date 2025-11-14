@@ -15,6 +15,8 @@ The application is already running on the VM, so you can start using it immediat
 **Navigation Bar:**
 At the top of every page, you'll see:
 - **Dashboard**: Return to the main drug/API selection page
+- **🔬 Annotation Review**: Quality review of PAD annotations by lighting conditions
+- **📦 Lab Card Inventory**: Browse all project cards in the laboratory database
 - **Export Data**: Download all your matched data as a CSV file
 - **💾 Backup**: Create a manual backup of the database
 - **Help**: Access this guide
@@ -123,6 +125,84 @@ If no candidate matches your annotation:
 Click **"Save Match"** to record your selection and move to the next annotation.
 
 If you want to skip without saving, click **"Skip"**.
+
+## Gallery Features
+
+The application includes two specialized galleries for reviewing and managing your data:
+
+### 🔬 Annotation Review Gallery
+
+Access this gallery from the navigation bar or Dashboard to review PAD annotations organized by lighting conditions.
+
+![Annotation Review Gallery](figs/annotation-review.png)
+
+**Purpose:** Quality review of your PAD annotations to ensure consistency and accuracy.
+
+**Features:**
+- **Organized by Lighting**: Images are grouped by lighting conditions (lightbox, benchtop, no light)
+- **Filter Options:**
+  - Lighting conditions
+  - Camera types
+  - Background (black/white)
+  - API/Drug
+  - Match status (Matched, No Match)
+- **Image Preview**: Click any image to view it in full size
+- **Lazy Loading**: Images load as you scroll for better performance
+- **Statistics**: See how many items match your current filters
+
+**How to Use:**
+1. Click "🔬 Annotation Review" in the navigation bar
+2. Use the filter sidebar to narrow down your selection
+3. Click "Apply Filters" to update the view
+4. Scroll through images grouped by lighting condition
+5. Click any image for a larger view
+
+### 📦 Lab Card Inventory
+
+Access this gallery to browse and manage all project cards in the laboratory database.
+
+![Lab Card Inventory](figs/card-inventory.png)
+
+**Purpose:** View and organize all lab cards, whether matched to annotations or not.
+
+**Features:**
+- **Complete Inventory**: Shows ALL cards (both matched and unmatched)
+- **Organized by API/Drug**: Cards grouped by their API for easy browsing
+- **Hover Information**: When you hover over an image, you'll see:
+  - Database ID (the card's unique identifier)
+  - PAD ID (sample_id from the project data)
+  - Camera type
+  - Sample name
+- **Filter Options:**
+  - Camera types
+  - Card status (Valid, With Issue)
+  - Match status (Matched, Unmatched)
+  - Search by text
+- **Card Actions:**
+  - **Quick Match (🔗)**: Navigate directly to the matching interface for this card
+  - **Mark with Issue (❌)**: Flag cards that have problems with a description
+  - **Remove Issue Flag (✓)**: Clear the issue flag from a card
+- **Visual Indicators:**
+  - Green badge (✓ Matched): Card is matched to an annotation
+  - Red badge (Issue): Card has been flagged with an issue
+- **Export**: Download filtered results as CSV
+
+**How to Use:**
+1. Click "📦 Lab Card Inventory" in the navigation bar
+2. Browse cards organized by API/Drug name
+3. Use filters to find specific cards:
+   - Check/uncheck camera types
+   - Toggle between matched/unmatched cards
+   - Search for specific text
+4. Hover over images to see Database ID and PAD ID
+5. Use Quick Match button to navigate to matching interface
+6. Flag problematic cards with the Issue button
+
+**Managing Card Issues:**
+- Click "❌" to mark a card with an issue (you must provide a description)
+- Click on the red "Issue" badge to edit the issue description
+- Click "✓" to remove the issue flag from a card
+- These flags help track cards that need attention or have quality problems
 
 ## Step 4: Backup and Export
 

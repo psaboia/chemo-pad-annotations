@@ -118,6 +118,34 @@ The exported CSV includes:
 - Visual status indicators (Complete, Partial, Not Started)
 - Filter annotations by status
 
+### Gallery Views
+
+#### 🔬 Annotation Review Gallery
+- **Purpose**: Quality review of PAD annotations organized by lighting conditions
+- **Organization**: Groups images by lighting (lightbox, benchtop, no light)
+- **Filters**: Lighting, camera type, background, API, match status
+- **Features**: Lazy loading, full-size image preview, statistics
+- **Use Case**: Review annotation quality across different lighting conditions
+
+#### 📦 Lab Card Inventory
+- **Purpose**: Browse and manage all project cards in the laboratory database
+- **Organization**: Groups cards by API/drug name
+- **Features**:
+  - Shows both matched and unmatched cards
+  - Hover displays Database ID and PAD ID (sample_id)
+  - Quick Match button for direct navigation to matching interface
+  - Mark cards with issues and provide descriptions
+  - Filter by camera type, match status, and issue status
+  - Export filtered results to CSV
+- **Use Case**: Manage complete inventory of lab cards and track problematic cards
+
+### Database Features
+- **SQLite Database**: Reliable concurrent access with Write-Ahead Logging
+- **Automatic Backups**: Created when completing PAD matching and on export
+- **Manual Backups**: On-demand backup creation with retention policy
+- **Data Integrity**: All operations are atomic and persistent
+- **Issue Tracking**: Separate table for tracking cards with problems
+
 ## Technical Details
 
 ### Architecture
@@ -125,9 +153,12 @@ The exported CSV includes:
 - **Frontend**: HTML/CSS/JavaScript with responsive design
 - **Backend**: Flask web framework (Python)
 - **Data Storage**:
-  - Session data: `/session/` folder
-    - `matches.json`: Maps annotation rows to dataset entries
-    - `notes.json`: Stores notes
+  - Database: `/database/chemopad.db` (SQLite)
+    - `matches` table: Maps annotation rows to dataset entries
+    - `notes` table: Stores annotation notes
+    - `invalid_cards` table: Tracks cards with issues
+    - `backups` table: Records backup history
+  - Backup files: `/database/backups/` folder (auto and manual backups)
   - Generated exports: `/exports/` folder (timestamped CSV files)
   - Source data: `/data/` folder (original CSV files)
 

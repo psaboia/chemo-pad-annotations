@@ -456,7 +456,7 @@ async function searchAnnotations() {
         <p class="info-message">
             To match this card to an annotation, please use the main matching interface:
         </p>
-        <a href="/match/${currentCardIdForMatch}" class="btn-primary" style="display: inline-block; margin-top: 10px;">
+        <a href="/match-card/${currentCardIdForMatch}" class="btn-primary" style="display: inline-block; margin-top: 10px;">
             Go to Matching Page →
         </a>
     `;

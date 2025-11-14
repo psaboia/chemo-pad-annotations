@@ -305,6 +305,51 @@ def match_page(api_name, pad_num):
                          next_pad=next_pad,
                          prev_pad=prev_pad)
 
+@app.route('/match-card/<int:card_id>')
+@login_required
+def match_card_redirect(card_id):
+    """Redirect from card ID to the appropriate matching page"""
+    # Find the card in project_cards_df
+    card_row = project_cards_df[project_cards_df['id'] == card_id]
+
+    if card_row.empty:
+        # Card not found, redirect to dashboard with error
+        logger.warning(f"Card ID {card_id} not found")
+        return redirect(url_for('dashboard'))
+
+    card = card_row.iloc[0]
+
+    # Get PAD# (sample_id) from the card
+    pad_num = card['sample_id']
+
+    # Get API name from sample_name
+    sample_name = card['sample_name']
+    if pd.notna(sample_name) and '(' in sample_name:
+        api_name = sample_name.split('(')[0].strip()
+    else:
+        api_name = sample_name if pd.notna(sample_name) else 'Unknown'
+
+    # Find if there's a matching annotation for this PAD#
+    matching_annotations = annotations_df[
+        (annotations_df['API'] == api_name) &
+        (annotations_df['PAD#'] == pad_num)
+    ]
+
+    if not matching_annotations.empty:
+        # Redirect to the matching page for this API/PAD
+        return redirect(url_for('match_page', api_name=api_name, pad_num=pad_num))
+    else:
+        # No matching annotation found, try to find any annotation with this PAD#
+        any_pad_annotations = annotations_df[annotations_df['PAD#'] == pad_num]
+        if not any_pad_annotations.empty:
+            # Use the first API found
+            first_api = any_pad_annotations.iloc[0]['API']
+            return redirect(url_for('match_page', api_name=first_api, pad_num=pad_num))
+        else:
+            # No annotations at all for this PAD#, redirect to dashboard
+            logger.info(f"No annotations found for PAD# {pad_num}")
+            return redirect(url_for('dashboard'))
+
 @app.route('/api/save_match', methods=['POST'])
 @login_required
 def save_match():

@@ -246,14 +246,14 @@ function updateSectionCounts() {
 }
 
 // Open image modal
-function openImageModal(imageUrl, cardId, sampleName) {
+function openImageModal(imageUrl, cardId, padId, sampleName) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
     const modalCaption = document.getElementById('modalCaption');
 
     modal.style.display = 'block';
     modalImg.src = imageUrl;
-    modalCaption.innerHTML = `Card #${cardId} - ${sampleName}`;
+    modalCaption.innerHTML = `Database ID: ${cardId} | PAD ID: ${padId} | ${sampleName}`;
 
     document.addEventListener('keydown', handleModalKeyPress);
 }

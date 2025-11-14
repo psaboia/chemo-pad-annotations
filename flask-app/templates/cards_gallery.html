@@ -112,9 +112,10 @@
                             <img class="gallery-image lazy"
                                  data-src="{{ card.image_url }}"
                                  alt="Card {{ card.card_id }} - {{ card.sample_name }}"
-                                 onclick="openImageModal('{{ card.image_url|e }}', '{{ card.card_id }}', '{{ card.sample_name|e }}')">
+                                 onclick="openImageModal('{{ card.image_url|e }}', '{{ card.card_id }}', '{{ card.pad_id|e }}', '{{ card.sample_name|e }}')">
                             <div class="image-overlay">
-                                <span class="overlay-text">Card #{{ card.card_id }}</span>
+                                <span class="overlay-text">Database ID: {{ card.card_id }}</span>
+                                <span class="overlay-text">PAD ID: {{ card.pad_id }}</span>
                                 <span class="overlay-text">{{ card.camera }}</span>
                                 <span class="overlay-text">{{ card.sample_name }}</span>
                             </div>
@@ -123,11 +124,14 @@
                         <div class="no-image-container">
                             <svg class="no-image-placeholder" viewBox="0 0 200 200">
                                 <rect width="200" height="200" fill="#f0f0f0"/>
-                                <text x="100" y="100" text-anchor="middle" fill="#999" font-size="14">
+                                <text x="100" y="90" text-anchor="middle" fill="#999" font-size="14">
                                     No Image
                                 </text>
-                                <text x="100" y="120" text-anchor="middle" fill="#999" font-size="10">
-                                    Card #{{ card.card_id }}
+                                <text x="100" y="110" text-anchor="middle" fill="#999" font-size="10">
+                                    DB ID: {{ card.card_id }}
+                                </text>
+                                <text x="100" y="125" text-anchor="middle" fill="#999" font-size="10">
+                                    PAD ID: {{ card.pad_id }}
                                 </text>
                             </svg>
                         </div>

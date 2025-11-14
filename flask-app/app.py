@@ -708,8 +708,12 @@ def cards_gallery():
         is_invalid = card_id in invalid_cards
         invalid_reason = invalid_cards.get(card_id, '') if is_invalid else ''
 
+        # Get PAD ID (sample_id)
+        pad_id = row['sample_id'] if pd.notna(row['sample_id']) else 'N/A'
+
         cards_data.append({
             'card_id': int(card_id),
+            'pad_id': pad_id,  # PAD ID from sample_id field
             'api': api,
             'sample_name': sample_name,
             'camera': camera,

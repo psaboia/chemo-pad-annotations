@@ -49,10 +49,10 @@ body {
 .nav-link {
     background: #3498db;
     color: white;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 4px;
     text-decoration: none;
-    font-size: 0.9em;
+    font-size: 0.8em;
     transition: background 0.3s;
 }
 
